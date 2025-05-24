@@ -35,11 +35,6 @@ export default function OnboardingScreen() {
 			<SafeAreaView style={styles.container}>
 				<View style={styles.contentContainer}>
 					<View style={styles.spacer} />
-
-					{/* <ThemedText style={styles.tagline}>
-						Break free, build healthy habits, build consistency.
-					</ThemedText> */}
-
 					<TouchableOpacity
 						style={[styles.button, { backgroundColor: '#636DEC' }]}
 						onPress={handleGetStarted}

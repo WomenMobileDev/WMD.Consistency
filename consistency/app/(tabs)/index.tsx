@@ -10,11 +10,14 @@ import {
 	TouchableOpacity,
 	View,
 	Platform,
+	Alert,
 } from 'react-native';
 import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+
+import LogForm, { LogData } from '../LogForm';
 
 // Define the quote type
 type Quote = {
@@ -45,6 +48,9 @@ export default function HomeScreen() {
 	const [quote, setQuote] = useState<Quote | null>(null);
 	const [loading, setLoading] = useState(true);
 	const insets = useSafeAreaInsets();
+	const [logFormVisible, setLogFormVisible] = useState(false);
+	const [isLogged, setIsLogged] = useState(false);
+	const [logData, setLogData] = useState<LogData | null>(null);
 
 	useEffect(() => {
 		fetchRandomQuote();
@@ -68,6 +74,24 @@ export default function HomeScreen() {
 
 	const handleRefreshQuote = () => {
 		fetchRandomQuote();
+	};
+
+	const handleLogPress = () => {
+		setLogFormVisible(true);
+	};
+
+	const handleLogFormClose = () => {
+		setLogFormVisible(false);
+	};
+
+	const handleLogFormSave = (data: LogData) => {
+		setLogData(data);
+		setIsLogged(true);
+		// In a real app, you would save this data to a database or storage
+		console.log('Log data saved:', data);
+
+		// Show a success message
+		Alert.alert('Success', 'Your daily log has been saved!', [{ text: 'OK' }]);
 	};
 
 	return (
@@ -96,11 +120,48 @@ export default function HomeScreen() {
 							</View>
 						</View>
 						<View style={styles.logStatusRow}>
-							<Text style={styles.notLoggedText}>Not Logged</Text>
-							<TouchableOpacity style={styles.logButton}>
-								<Text style={styles.logButtonText}>Log It</Text>
+							<Text
+								style={[styles.notLoggedText, isLogged && styles.loggedText]}
+							>
+								{isLogged ? 'Logged' : 'Not Logged'}
+							</Text>
+							<TouchableOpacity
+								style={[styles.logButton, isLogged && styles.loggedButton]}
+								onPress={handleLogPress}
+							>
+								<Text style={styles.logButtonText}>
+									{isLogged ? 'Update Log' : 'Log It'}
+								</Text>
 							</TouchableOpacity>
 						</View>
+
+						{isLogged && logData && (
+							<View style={styles.logSummary}>
+								<Text style={styles.logSummaryTitle}>
+									Today&rsquo;s Log Summary:
+								</Text>
+								<View style={styles.logSummaryItem}>
+									<Text style={styles.logSummaryLabel}>Mood:</Text>
+									<Text style={styles.logSummaryValue}>{logData.mood}</Text>
+								</View>
+								<View style={styles.logSummaryItem}>
+									<Text style={styles.logSummaryLabel}>Habit Completed:</Text>
+									<Text style={styles.logSummaryValue}>
+										{logData.habitCompleted ? 'Yes ✅' : 'No ❌'}
+									</Text>
+								</View>
+								{logData.description ? (
+									<View style={styles.descriptionContainer}>
+										<Text style={styles.logSummaryLabel}>Notes:</Text>
+										<Text style={styles.descriptionText}>
+											{logData.description.length > 100
+												? logData.description.substring(0, 100) + '...'
+												: logData.description}
+										</Text>
+									</View>
+								) : null}
+							</View>
+						)}
 					</View>
 				</View>
 
@@ -162,6 +223,13 @@ export default function HomeScreen() {
 			</ScrollView>
 
 			<SafeAreaView edges={['bottom']} style={{ backgroundColor: '#F5F5F7' }} />
+
+			<LogForm
+				visible={logFormVisible}
+				onClose={handleLogFormClose}
+				onSave={handleLogFormSave}
+				date={today}
+			/>
 		</View>
 	);
 }
@@ -239,15 +307,57 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		color: '#E74C3C',
 	},
+	loggedText: {
+		fontSize: 16,
+		color: '#27AE60',
+	},
 	logButton: {
 		backgroundColor: '#E74C3C',
 		paddingHorizontal: 16,
 		paddingVertical: 8,
 		borderRadius: 6,
 	},
+	loggedButton: {
+		backgroundColor: '#27AE60',
+	},
 	logButtonText: {
 		color: 'white',
 		fontWeight: '600',
+	},
+	logSummary: {
+		marginTop: 16,
+		paddingTop: 16,
+		borderTopWidth: 1,
+		borderTopColor: '#E5E5E5',
+	},
+	logSummaryTitle: {
+		fontSize: 14,
+		fontWeight: '600',
+		marginBottom: 8,
+		color: '#333',
+	},
+	logSummaryItem: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		marginBottom: 4,
+	},
+	logSummaryLabel: {
+		fontSize: 14,
+		color: '#666',
+	},
+	logSummaryValue: {
+		fontSize: 14,
+		fontWeight: '500',
+		color: '#333',
+	},
+	descriptionContainer: {
+		marginTop: 8,
+	},
+	descriptionText: {
+		fontSize: 14,
+		color: '#333',
+		marginTop: 4,
+		fontStyle: 'italic',
 	},
 	focusHeader: {
 		flexDirection: 'row',
