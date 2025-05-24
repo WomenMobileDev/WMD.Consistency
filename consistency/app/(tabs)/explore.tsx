@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
@@ -8,103 +8,98 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
+export default function ExploreScreen() {
+	return (
+		<ParallaxScrollView
+			headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+			headerImage={
+				<IconSymbol
+					size={310}
+					color="#808080"
+					name="chevron.left.forwardslash.chevron.right"
+					style={styles.headerImage}
+				/>
+			}
+		>
+			<ThemedView style={styles.titleContainer}>
+				<ThemedText type="title">Explore</ThemedText>
+			</ThemedView>
+			<ThemedText>
+				Discover tools and strategies to build consistent habits.
+			</ThemedText>
+
+			<Collapsible title="The Science of Habit Formation">
+				<ThemedText>
+					Building habits requires understanding the habit loop: cue, craving,
+					response, and reward.
+				</ThemedText>
+				<ThemedText>
+					The key to forming lasting habits is to make them obvious, attractive,
+					easy, and satisfying.
+				</ThemedText>
+				<ExternalLink href="https://jamesclear.com/habits">
+					<ThemedText type="link">Learn more</ThemedText>
+				</ExternalLink>
+			</Collapsible>
+
+			<Collapsible title="Tracking Your Progress">
+				<ThemedText>
+					Consistency tracking helps you visualize your progress and maintain
+					motivation.
+				</ThemedText>
+				<ThemedText>
+					Use this app to track your daily activities and build consistency over
+					time.
+				</ThemedText>
+			</Collapsible>
+
+			<Collapsible title="Setting Realistic Goals">
+				<ThemedText>
+					Start with small, achievable goals to build momentum and confidence.
+				</ThemedText>
+				<ThemedText>
+					Remember that consistency matters more than intensity when forming
+					habits.
+				</ThemedText>
+				<ExternalLink href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3505409/">
+					<ThemedText type="link">Research on habit formation</ThemedText>
+				</ExternalLink>
+			</Collapsible>
+
+			<Collapsible title="Overcoming Obstacles">
+				<ThemedText>
+					Identify potential obstacles in advance and create strategies to
+					overcome them.
+				</ThemedText>
+				<ThemedText>
+					Use implementation intentions (If X happens, then I will do Y) to stay
+					on track.
+				</ThemedText>
+			</Collapsible>
+
+			<Collapsible title="Building a Support System">
+				<ThemedText>
+					Share your goals with others who can provide encouragement and
+					accountability.
+				</ThemedText>
+				<ThemedText>
+					Consider joining groups or communities focused on similar goals for
+					additional support.
+				</ThemedText>
+			</Collapsible>
+		</ParallaxScrollView>
+	);
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+	headerImage: {
+		color: '#808080',
+		bottom: -90,
+		left: -35,
+		position: 'absolute',
+	},
+	titleContainer: {
+		flexDirection: 'row',
+		gap: 8,
+	},
 });
