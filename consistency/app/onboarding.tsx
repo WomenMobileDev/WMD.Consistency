@@ -23,7 +23,7 @@ export default function OnboardingScreen() {
 	const router = useRouter();
 
 	const handleGetStarted = () => {
-		router.replace('/(tabs)');
+		router.replace('/signin');
 	};
 
 	return (

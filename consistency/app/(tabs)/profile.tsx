@@ -6,10 +6,13 @@ import {
 	Image,
 	ScrollView,
 	Dimensions,
+	TouchableOpacity,
+	Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -66,6 +69,32 @@ const mockGraphData = [
 ];
 
 export default function ProfileScreen() {
+	const { user, signOut } = useAuth();
+	const router = useRouter();
+
+	// Function to handle logout
+	const handleLogout = async () => {
+		Alert.alert(
+			'Logout',
+			'Are you sure you want to logout?',
+			[
+				{
+					text: 'Cancel',
+					style: 'cancel',
+				},
+				{
+					text: 'Logout',
+					onPress: async () => {
+						await signOut();
+						// The AuthContext will handle navigation to the onboarding screen
+					},
+					style: 'destructive',
+				},
+			],
+			{ cancelable: true }
+		);
+	};
+
 	// Function to render the graph - this is a simplified version
 	const renderGraph = () => {
 		const maxHeight = 150;
@@ -118,12 +147,25 @@ export default function ProfileScreen() {
 		);
 	};
 
+	// Use user data from auth context if available
+	const displayName = user?.name || userData.name;
+	const displayInitial = user?.name
+		? user.name.charAt(0)
+		: userData.name.charAt(0);
+
+	// Custom Avatar component with user data
+	const UserAvatar = () => (
+		<View style={styles.avatarContainer}>
+			<Text style={styles.avatarText}>{displayInitial}</Text>
+		</View>
+	);
+
 	return (
 		<SafeAreaView style={styles.container} edges={['top']}>
 			<View style={styles.header}>
 				<Text style={styles.headerTitle}>Profile</Text>
 				<View style={styles.headerAvatarContainer}>
-					<Avatar />
+					<UserAvatar />
 				</View>
 			</View>
 
@@ -133,10 +175,10 @@ export default function ProfileScreen() {
 			>
 				<View style={styles.profileHeader}>
 					<View style={styles.profileAvatarContainer}>
-						<Avatar />
+						<UserAvatar />
 					</View>
 					<View style={styles.profileInfo}>
-						<Text style={styles.profileName}>{userData.name}</Text>
+						<Text style={styles.profileName}>{displayName}</Text>
 						<Text style={styles.profileDays}>
 							{userData.daysSmokeFree} Days Smoke-Free
 						</Text>
@@ -253,6 +295,11 @@ export default function ProfileScreen() {
 					<Text style={styles.quoteAuthor}>- {userData.quote.author}</Text>
 				</View>
 
+				<TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+					<Ionicons name="log-out-outline" size={20} color="white" />
+					<Text style={styles.logoutButtonText}>Logout</Text>
+				</TouchableOpacity>
+
 				<View style={{ height: 80 }} />
 			</ScrollView>
 
@@ -346,6 +393,24 @@ const styles = StyleSheet.create({
 		color: 'white',
 		fontSize: 14,
 		fontWeight: '500',
+	},
+	logoutButton: {
+		backgroundColor: '#F86D70',
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingVertical: 12,
+		paddingHorizontal: 20,
+		borderRadius: 30,
+		marginHorizontal: 16,
+		marginTop: 16,
+		marginBottom: 20,
+	},
+	logoutButtonText: {
+		color: 'white',
+		fontSize: 16,
+		fontWeight: '600',
+		marginLeft: 8,
 	},
 	card: {
 		backgroundColor: 'white',

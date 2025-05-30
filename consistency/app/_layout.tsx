@@ -8,16 +8,26 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View, ActivityIndicator } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { AuthProvider } from '@/context/AuthContext';
 
 // Keep the splash screen visible while we fetch resources
 // Must be called before any other components are rendered
 SplashScreen.preventAutoHideAsync().catch(() => {
 	console.warn('Failed to prevent auto hide of splash screen');
 });
+
+// Simple loading component
+function LoadingScreen() {
+	return (
+		<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+			<ActivityIndicator size="large" color="#636DEC" />
+		</View>
+	);
+}
 
 export default function RootLayout() {
 	const colorScheme = useColorScheme();
@@ -49,17 +59,19 @@ export default function RootLayout() {
 	}, [loaded, onLayoutRootView]);
 
 	if (!loaded) {
-		return null;
+		return <LoadingScreen />;
 	}
 
 	return (
-		<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-			<Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-				<Stack.Screen name="onboarding" />
-				<Stack.Screen name="(tabs)" />
-				<Stack.Screen name="+not-found" options={{ headerShown: true }} />
-			</Stack>
-			<StatusBar style="auto" />
-		</ThemeProvider>
+		<AuthProvider>
+			<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+				<Stack>
+					<Stack.Screen name="onboarding" options={{ headerShown: false }} />
+					<Stack.Screen name="signin" options={{ headerShown: false }} />
+					<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+					<Stack.Screen name="profile" options={{ headerShown: false }} />
+				</Stack>
+			</ThemeProvider>
+		</AuthProvider>
 	);
 }

@@ -38,6 +38,11 @@
 			"image": "./assets/images/SplashOptimized.png",
 			"resizeMode": "cover",
 			"backgroundColor": "#ffffff"
+		},
+		"extra": {
+			"eas": {
+				"projectId": "your-eas-project-id"
+			}
 		}
 	}
 }
