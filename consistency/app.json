@@ -1,38 +1,38 @@
 {
-	"expo": {
-		"name": "consistency",
-		"slug": "consistency",
-		"version": "1.0.0",
-		"orientation": "portrait",
-		"scheme": "consistency",
-		"userInterfaceStyle": "automatic",
-		"newArchEnabled": true,
-		"ios": {
+  "expo": {
+    "name": "consistency",
+    "slug": "consistency",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "consistency",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
 			"supportsTablet": true,
 			"bundleIdentifier": "com.consistency.app"
-		},
-		"android": {
+    },
+    "android": {
 			"edgeToEdgeEnabled": true,
 			"package": "com.consistency.app"
-		},
-		"web": {
-			"bundler": "metro",
-			"output": "static",
-			"favicon": "./assets/images/favicon.png"
-		},
-		"plugins": [
-			"expo-router",
-			[
-				"expo-splash-screen",
-				{
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
 					"image": "./assets/images/SplashOptimized.png",
 					"resizeMode": "cover",
-					"backgroundColor": "#ffffff"
-				}
-			]
-		],
-		"experiments": {
-			"typedRoutes": true
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
 		},
 		"splash": {
 			"image": "./assets/images/SplashOptimized.png",
@@ -43,6 +43,6 @@
 			"eas": {
 				"projectId": "your-eas-project-id"
 			}
-		}
-	}
+    }
+  }
 }

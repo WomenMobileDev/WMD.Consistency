@@ -11,11 +11,15 @@ import {
 	View,
 	Platform,
 	Alert,
+	Modal,
+	TextInput,
+	KeyboardAvoidingView,
 } from 'react-native';
 import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { Picker } from '@react-native-picker/picker';
 
 import LogForm, { LogData } from '../LogForm';
 
@@ -51,6 +55,11 @@ export default function HomeScreen() {
 	const [logFormVisible, setLogFormVisible] = useState(false);
 	const [isLogged, setIsLogged] = useState(false);
 	const [logData, setLogData] = useState<LogData | null>(null);
+	const [goalModalVisible, setGoalModalVisible] = useState(false);
+	const [goalName, setGoalName] = useState('');
+	const [goalDescription, setGoalDescription] = useState('');
+	const [goalDuration, setGoalDuration] = useState('');
+	const [goalUnit, setGoalUnit] = useState('days');
 
 	useEffect(() => {
 		fetchRandomQuote();
@@ -92,6 +101,57 @@ export default function HomeScreen() {
 
 		// Show a success message
 		Alert.alert('Success', 'Your daily log has been saved!', [{ text: 'OK' }]);
+	};
+
+	const handleAddGoal = () => {
+		setGoalModalVisible(true);
+	};
+
+	const handleGoalSubmit = () => {
+		// Validate form
+		if (!goalName.trim()) {
+			Alert.alert('Error', 'Please enter a goal name');
+			return;
+		}
+		if (
+			!goalDuration.trim() ||
+			isNaN(Number(goalDuration)) ||
+			Number(goalDuration) <= 0
+		) {
+			Alert.alert('Error', 'Please enter a valid duration (positive number)');
+			return;
+		}
+
+		const goalData = {
+			name: goalName.trim(),
+			description: goalDescription.trim(),
+			color: '', // can be added later
+			icon: '', // can be added later
+			goal_duration: Number(goalDuration),
+			goal_unit: goalUnit,
+		};
+
+		console.log('Goal submitted:', goalData);
+
+		// Reset form
+		setGoalModalVisible(false);
+		setGoalName('');
+		setGoalDescription('');
+		setGoalDuration('');
+		setGoalUnit('days');
+
+		Alert.alert('Success', 'Your goal has been added successfully!', [
+			{ text: 'OK' },
+		]);
+	};
+
+	const handleModalClose = () => {
+		setGoalModalVisible(false);
+		// Reset form when closing
+		setGoalName('');
+		setGoalDescription('');
+		setGoalDuration('');
+		setGoalUnit('days');
 	};
 
 	return (
@@ -222,6 +282,15 @@ export default function HomeScreen() {
 				<View style={styles.bottomSpacer} />
 			</ScrollView>
 
+			{/* Floating Action Button */}
+			<TouchableOpacity
+				style={[styles.fab, { bottom: insets.bottom + 60 }]}
+				onPress={handleAddGoal}
+				activeOpacity={0.8}
+			>
+				<Ionicons name="add" size={28} color="white" />
+			</TouchableOpacity>
+
 			<SafeAreaView edges={['bottom']} style={{ backgroundColor: '#F5F5F7' }} />
 
 			<LogForm
@@ -230,6 +299,111 @@ export default function HomeScreen() {
 				onSave={handleLogFormSave}
 				date={today}
 			/>
+
+			{/* Improved Goal Modal */}
+			<Modal
+				visible={goalModalVisible}
+				animationType="slide"
+				transparent={true}
+				onRequestClose={handleModalClose}
+			>
+				<KeyboardAvoidingView
+					style={styles.modalOverlay}
+					behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+				>
+					<View style={styles.modalContent}>
+						<View style={styles.modalHeader}>
+							<Text style={styles.modalTitle}>Add a New Goal</Text>
+							<TouchableOpacity onPress={handleModalClose}>
+								<Ionicons name="close" size={24} color="#666" />
+							</TouchableOpacity>
+						</View>
+
+						<ScrollView showsVerticalScrollIndicator={false}>
+							<View style={styles.formGroup}>
+								<Text style={styles.inputLabel}>Goal Name *</Text>
+								<TextInput
+									style={styles.input}
+									placeholder="e.g., Quit Smoking, Exercise Daily"
+									value={goalName}
+									onChangeText={setGoalName}
+									maxLength={50}
+								/>
+							</View>
+
+							<View style={styles.formGroup}>
+								<Text style={styles.inputLabel}>Description</Text>
+								<TextInput
+									style={[styles.input, styles.textArea]}
+									placeholder="Describe your goal and why it matters to you..."
+									value={goalDescription}
+									onChangeText={setGoalDescription}
+									multiline
+									numberOfLines={4}
+									textAlignVertical="top"
+									maxLength={200}
+								/>
+								<Text style={styles.characterCount}>
+									{goalDescription.length}/200
+								</Text>
+							</View>
+
+							<View style={styles.durationContainer}>
+								<View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+									<Text style={styles.inputLabel}>Duration *</Text>
+									<TextInput
+										style={styles.input}
+										placeholder="30"
+										value={goalDuration}
+										onChangeText={(text) => {
+											// Only allow numbers
+											const numericValue = text.replace(/[^0-9]/g, '');
+											setGoalDuration(numericValue);
+										}}
+										keyboardType="numeric"
+										maxLength={4}
+									/>
+								</View>
+								<View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+									<Text style={styles.inputLabel}>Unit</Text>
+									<View style={styles.pickerContainer}>
+										<Picker
+											selectedValue={goalUnit}
+											onValueChange={(itemValue: string) =>
+												setGoalUnit(itemValue)
+											}
+											style={styles.picker}
+											mode="dropdown"
+											dropdownIconColor="#666"
+										>
+											<Picker.Item label="Days" value="days" />
+											<Picker.Item label="Weeks" value="weeks" />
+											<Picker.Item label="Months" value="months" />
+										</Picker>
+									</View>
+								</View>
+							</View>
+						</ScrollView>
+
+						<View style={styles.modalButtonRow}>
+							<TouchableOpacity
+								style={[styles.modalButton, styles.cancelButton]}
+								onPress={handleModalClose}
+							>
+								<Text style={[styles.modalButtonText, styles.cancelButtonText]}>
+									Cancel
+								</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={styles.modalButton}
+								onPress={handleGoalSubmit}
+							>
+								<Text style={styles.modalButtonText}>Add Goal</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
+				</KeyboardAvoidingView>
+			</Modal>
 		</View>
 	);
 }
@@ -245,7 +419,7 @@ const styles = StyleSheet.create({
 	scrollContent: {
 		paddingHorizontal: 16,
 		paddingTop: 8,
-		paddingBottom: 20,
+		paddingBottom: 100, // Extra padding for FAB
 	},
 	header: {
 		paddingVertical: 12,
@@ -431,5 +605,122 @@ const styles = StyleSheet.create({
 	},
 	bottomSpacer: {
 		height: 20,
+	},
+	// Floating Action Button
+	fab: {
+		position: 'absolute',
+		right: 20,
+		width: 56,
+		height: 56,
+		borderRadius: 28,
+		backgroundColor: '#6366F1',
+		justifyContent: 'center',
+		alignItems: 'center',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5,
+	},
+	// Modal Styles
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		justifyContent: 'center',
+		alignItems: 'center',
+		padding: 20,
+	},
+	modalContent: {
+		backgroundColor: 'white',
+		borderRadius: 16,
+		width: '100%',
+		maxHeight: '85%',
+		paddingBottom: 20,
+	},
+	modalHeader: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		padding: 20,
+		borderBottomWidth: 1,
+		borderBottomColor: '#E5E5E5',
+	},
+	modalTitle: {
+		fontSize: 20,
+		fontWeight: '600',
+		color: '#333',
+	},
+	formGroup: {
+		marginBottom: 16,
+		paddingHorizontal: 20,
+	},
+	inputLabel: {
+		fontSize: 14,
+		fontWeight: '500',
+		color: '#333',
+		marginBottom: 6,
+	},
+	input: {
+		borderWidth: 1,
+		borderColor: '#E5E5E5',
+		borderRadius: 8,
+		padding: 12,
+		fontSize: 16,
+		backgroundColor: '#FAFAFA',
+	},
+	textArea: {
+		height: 80,
+	},
+	characterCount: {
+		fontSize: 12,
+		color: '#666',
+		textAlign: 'right',
+		marginTop: 4,
+	},
+	durationContainer: {
+		flexDirection: 'row',
+		paddingHorizontal: 20,
+	},
+	pickerContainer: {
+		borderWidth: 1,
+		borderColor: '#E5E5E5',
+		borderRadius: 8,
+		backgroundColor: '#FAFAFA',
+		overflow: 'hidden',
+		justifyContent: 'center',
+		minHeight: 50,
+	},
+	picker: {
+		height: Platform.OS === 'ios' ? 50 : 50,
+		width: '100%',
+		color: '#333',
+		backgroundColor: 'transparent',
+	},
+	modalButtonRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		paddingHorizontal: 20,
+		paddingTop: 20,
+		gap: 12,
+	},
+	modalButton: {
+		flex: 1,
+		backgroundColor: '#6366F1',
+		paddingVertical: 14,
+		borderRadius: 8,
+		alignItems: 'center',
+	},
+	modalButtonText: {
+		color: 'white',
+		fontSize: 16,
+		fontWeight: '600',
+	},
+	cancelButton: {
+		backgroundColor: 'transparent',
+		borderWidth: 1,
+		borderColor: '#E5E5E5',
+	},
+	cancelButtonText: {
+		color: '#666',
 	},
 });

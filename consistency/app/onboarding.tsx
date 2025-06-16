@@ -1,25 +1,18 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-	Dimensions,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
-	useColorScheme,
 	Image,
-	ImageBackground,
+	Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Colors } from '@/constants/Colors';
 
 const { width, height } = Dimensions.get('window');
 
 export default function OnboardingScreen() {
-	const colorScheme = useColorScheme();
 	const router = useRouter();
 
 	const handleGetStarted = () => {
@@ -27,70 +20,65 @@ export default function OnboardingScreen() {
 	};
 
 	return (
-		<ImageBackground
-			source={require('../assets/images/SplashOptimized.png')}
-			style={styles.backgroundImage}
-			resizeMode="cover"
-		>
-			<SafeAreaView style={styles.container}>
-				<View style={styles.contentContainer}>
-					<View style={styles.spacer} />
-					<TouchableOpacity
-						style={[styles.button, { backgroundColor: '#636DEC' }]}
-						onPress={handleGetStarted}
-					>
+		<View style={styles.container}>
+			<Image
+				source={require('../assets/images/SplashOptimized.png')}
+				style={styles.backgroundImage}
+				resizeMode="contain"
+			/>
+
+			<SafeAreaView style={styles.safeArea}>
+				<View style={styles.buttonContainer}>
+					<TouchableOpacity style={styles.button} onPress={handleGetStarted}>
 						<Text style={styles.buttonText}>
-							Get Started
-							<Text style={styles.arrowIcon}> →</Text>
+							Get Started <Text style={styles.arrow}>→</Text>
 						</Text>
 					</TouchableOpacity>
 				</View>
 			</SafeAreaView>
-		</ImageBackground>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
-	backgroundImage: {
-		flex: 1,
-		width: '100%',
-		height: '100%',
-	},
 	container: {
 		flex: 1,
-		backgroundColor: 'transparent',
+		backgroundColor: 'black', // background behind zoomed-out image
+		position: 'relative',
 	},
-	contentContainer: {
+	backgroundImage: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		width: width * 1, // 5% smaller for padding effect
+		height: height * 1,
+		alignSelf: 'center',
+		justifyContent: 'center',
+	},
+	safeArea: {
 		flex: 1,
-		justifyContent: 'space-between',
+		justifyContent: 'flex-end',
 		alignItems: 'center',
-		paddingBottom: 50,
+		paddingBottom: 60,
 	},
-	spacer: {
-		flex: 1,
-	},
-	tagline: {
-		fontSize: 28,
-		fontWeight: '500',
-		textAlign: 'center',
-		marginBottom: 50,
-		color: '#666',
-		width: '80%',
+	buttonContainer: {
+		width: '100%',
+		alignItems: 'center',
 	},
 	button: {
-		paddingVertical: 15,
-		paddingHorizontal: 25,
-		borderRadius: 30,
+		backgroundColor: '#636DEC',
+		paddingVertical: 16,
+		paddingHorizontal: 28,
+		borderRadius: 32,
 		width: '80%',
 		alignItems: 'center',
 	},
 	buttonText: {
-		color: 'white',
+		color: '#fff',
 		fontSize: 18,
 		fontWeight: 'bold',
 	},
-	arrowIcon: {
-		fontSize: 18,
+	arrow: {
 		fontWeight: 'normal',
 	},
 });

@@ -1,20 +1,21 @@
+import { GoogleIcon } from '@/components/GoogleIcon';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+	ActivityIndicator,
+	Alert,
+	Image,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
-	ActivityIndicator,
-	Alert,
-	Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GoogleIcon } from '@/components/GoogleIcon';
-import { useAuth } from '@/context/AuthContext';
 
 export default function SignInScreen() {
 	const { signIn: authSignIn } = useAuth();
+	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 
 	// For development and testing purposes
@@ -22,16 +23,17 @@ export default function SignInScreen() {
 		try {
 			setLoading(true);
 
-			// Create a demo user
+			// Create a demo user with updated structure
 			const demoUser = {
-				id: 'demo123',
+				id: 123,
 				name: 'Demo User',
 				email: 'demo@example.com',
-				picture: '',
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
 			};
 
-			// Use our auth context to sign in
-			authSignIn(demoUser);
+			// Use our auth context to sign in with a demo token
+			authSignIn(demoUser, 'demo-token-123');
 
 			// Router will automatically navigate to the main app based on our AuthContext
 		} catch (error) {
@@ -49,9 +51,17 @@ export default function SignInScreen() {
 	const showGoogleSignInInfo = () => {
 		Alert.alert(
 			'Google Sign-In Unavailable',
-			'Google Sign-In is currently unavailable due to authentication configuration issues. Please use the Demo Sign In option for now.',
+			'Google Sign-In is currently unavailable due to authentication configuration issues. Please use the Email/Password option for now.',
 			[{ text: 'OK', style: 'default' }]
 		);
+	};
+
+	const navigateToLogin = () => {
+		router.push('/login');
+	};
+
+	const navigateToRegister = () => {
+		router.push('/register');
 	};
 
 	return (
@@ -64,11 +74,35 @@ export default function SignInScreen() {
 						resizeMode="contain"
 					/>
 					<Text style={styles.title}>Welcome to Consistency</Text>
-					<Text style={styles.subtitle}>Sign in to track your journey</Text>
+					<Text style={styles.subtitle}>
+						Choose how you&apos;d like to sign in
+					</Text>
 				</View>
 
 				<View style={styles.buttonContainer}>
-					{/* Primary sign-in option for now */}
+					{/* Email/Password Authentication */}
+					<TouchableOpacity
+						style={[styles.signInButton, styles.emailButton]}
+						onPress={navigateToLogin}
+					>
+						<Text style={styles.buttonText}>Sign In with Email</Text>
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						style={[styles.signInButton, styles.registerButton]}
+						onPress={navigateToRegister}
+					>
+						<Text style={styles.buttonText}>Create Account</Text>
+					</TouchableOpacity>
+
+					{/* Divider */}
+					<View style={styles.divider}>
+						<View style={styles.dividerLine} />
+						<Text style={styles.dividerText}>OR</Text>
+						<View style={styles.dividerLine} />
+					</View>
+
+					{/* Demo sign-in option for development */}
 					<TouchableOpacity
 						style={[styles.signInButton, styles.demoButton]}
 						onPress={handleDemoSignIn}
@@ -148,12 +182,17 @@ const styles = StyleSheet.create({
 		marginVertical: 10,
 		width: '100%',
 	},
+	emailButton: {
+		backgroundColor: '#58C096',
+	},
+	registerButton: {
+		backgroundColor: '#636DEC',
+	},
 	googleButton: {
 		backgroundColor: '#636DEC',
-		marginTop: 20,
 	},
 	demoButton: {
-		backgroundColor: '#58C096',
+		backgroundColor: '#ff9f43',
 	},
 	googleIconContainer: {
 		marginRight: 10,
@@ -165,6 +204,23 @@ const styles = StyleSheet.create({
 		color: 'white',
 		fontSize: 16,
 		fontWeight: 'bold',
+	},
+	divider: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginVertical: 20,
+		width: '100%',
+	},
+	dividerLine: {
+		flex: 1,
+		height: 1,
+		backgroundColor: '#ddd',
+	},
+	dividerText: {
+		marginHorizontal: 15,
+		fontSize: 14,
+		color: '#666',
+		fontWeight: '500',
 	},
 	noteText: {
 		fontSize: 14,

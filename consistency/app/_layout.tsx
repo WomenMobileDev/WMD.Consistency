@@ -30,10 +30,10 @@ function LoadingScreen() {
 }
 
 export default function RootLayout() {
-	const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
 	const [loaded, error] = useFonts({
-		SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-	});
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
 
 	// Handle any errors
 	useEffect(() => {
@@ -58,20 +58,20 @@ export default function RootLayout() {
 		}
 	}, [loaded, onLayoutRootView]);
 
-	if (!loaded) {
+  if (!loaded) {
 		return <LoadingScreen />;
-	}
+  }
 
-	return (
+  return (
 		<AuthProvider>
-			<ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-				<Stack>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
 					<Stack.Screen name="onboarding" options={{ headerShown: false }} />
 					<Stack.Screen name="signin" options={{ headerShown: false }} />
-					<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 					<Stack.Screen name="profile" options={{ headerShown: false }} />
-				</Stack>
-			</ThemeProvider>
+      </Stack>
+    </ThemeProvider>
 		</AuthProvider>
-	);
+  );
 }
