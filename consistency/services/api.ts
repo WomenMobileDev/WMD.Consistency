@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base API configuration
 const API_BASE_URL = 'https://c273-122-172-83-60.ngrok-free.app/api/v1'; // Replace with your actual API URL
@@ -34,6 +35,83 @@ export interface AuthResponse {
 	};
 }
 
+export interface GoalRequest {
+	name: string;
+	description: string;
+	color: string;
+	icon: string;
+	goal_duration: number;
+	goal_unit: string;
+}
+
+export interface GoalResponse {
+	id: number;
+	user_id: number;
+	name: string;
+	description: string;
+	color: string;
+	icon: string;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+	current_streak: {
+		id: number;
+		habit_id: number;
+		target_days: number;
+		current_streak: number;
+		max_streak_achieved: number;
+		start_date: string;
+		last_check_in_date: string;
+		completed_at: string | null;
+		failed_at: string | null;
+		status: string;
+		created_at: string;
+		updated_at: string;
+		check_ins: Array<{
+			id: number;
+			streak_id: number;
+			check_in_date: string;
+			notes: string;
+			created_at: string;
+			updated_at: string;
+		}>;
+	};
+}
+
+export interface Habit {
+	id: number;
+	user_id: number;
+	name: string;
+	description: string;
+	color: string;
+	icon: string;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+	current_streak: {
+		id: number;
+		habit_id: number;
+		target_days: number;
+		current_streak: number;
+		max_streak_achieved: number;
+		start_date: string;
+		last_check_in_date: string;
+		completed_at: string | null;
+		failed_at: string | null;
+		status: string;
+		created_at: string;
+		updated_at: string;
+		check_ins: Array<{
+			id: number;
+			streak_id: number;
+			check_in_date: string;
+			notes: string;
+			created_at: string;
+			updated_at: string;
+		}>;
+	};
+}
+
 // Authentication API functions
 export const authAPI = {
 	register: async (data: RegisterRequest): Promise<AuthResponse> => {
@@ -43,6 +121,26 @@ export const authAPI = {
 
 	login: async (data: LoginRequest): Promise<AuthResponse> => {
 		const response = await api.post(`${API_BASE_URL}/auth/login`, data);
+		return response.data;
+	},
+
+	createGoal: async (data: GoalRequest): Promise<GoalResponse> => {
+		const response = await api.post(`${API_BASE_URL}/habits`, data);
+		return response.data;
+	},
+
+	getHabits: async (): Promise<{ data: Habit[] }> => {
+		const response = await api.get(`${API_BASE_URL}/habits`);
+		return response.data;
+	},
+
+	createCheckIn: async (habitId: number, notes: string) => {
+		const response = await api.post(
+			`${API_BASE_URL}/habits/${habitId}/check-ins`,
+			{
+				notes: notes,
+			}
+		);
 		return response.data;
 	},
 };

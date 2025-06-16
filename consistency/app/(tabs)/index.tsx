@@ -19,7 +19,10 @@ import {
 	SafeAreaView,
 	useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker';
+import { useAuth } from '../../context/AuthContext';
+import { authAPI, Habit } from '../../services/api';
+import { router } from 'expo-router';
+import { Toast } from 'react-native-toast-message';
 
 import LogForm, { LogData } from '../LogForm';
 
@@ -60,9 +63,22 @@ export default function HomeScreen() {
 	const [goalDescription, setGoalDescription] = useState('');
 	const [goalDuration, setGoalDuration] = useState('');
 	const [goalUnit, setGoalUnit] = useState('days');
+	const [unitPickerVisible, setUnitPickerVisible] = useState(false);
+	const unitOptions = [
+		{ label: 'Days', value: 'days' },
+		{ label: 'Weeks', value: 'weeks' },
+		{ label: 'Months', value: 'months' },
+	];
+	const [habits, setHabits] = useState<Habit[]>([]);
+	const [loadingHabits, setLoadingHabits] = useState(true);
+	const [loggedHabits, setLoggedHabits] = useState<{ [key: number]: boolean }>(
+		{}
+	);
+	const [selectedHabitId, setSelectedHabitId] = useState<number | null>(null);
 
 	useEffect(() => {
 		fetchRandomQuote();
+		fetchHabits();
 	}, []);
 
 	const fetchRandomQuote = async () => {
@@ -81,36 +97,71 @@ export default function HomeScreen() {
 		}
 	};
 
+	const fetchHabits = async () => {
+		try {
+			const response = await authAPI.getHabits();
+			setHabits(response.data);
+		} catch (error) {
+			console.error('Error fetching habits:', error);
+		} finally {
+			setLoadingHabits(false);
+		}
+	};
+
 	const handleRefreshQuote = () => {
 		fetchRandomQuote();
 	};
 
-	const handleLogPress = () => {
+	const handleLogPress = (habitId: number) => {
 		setLogFormVisible(true);
+		setSelectedHabitId(habitId);
 	};
 
 	const handleLogFormClose = () => {
 		setLogFormVisible(false);
 	};
 
-	const handleLogFormSave = (data: LogData) => {
-		setLogData(data);
-		setIsLogged(true);
-		// In a real app, you would save this data to a database or storage
-		console.log('Log data saved:', data);
-
-		// Show a success message
-		Alert.alert('Success', 'Your daily log has been saved!', [{ text: 'OK' }]);
+	const handleLogFormSave = async (data: LogData) => {
+		console.log('🚀 ~ handleLogFormSave ~ data:', data);
+		try {
+			if (selectedHabitId) {
+				await authAPI.createCheckIn(selectedHabitId, data.description);
+				setLoggedHabits((prev) => ({
+					...prev,
+					[selectedHabitId]: true,
+				}));
+				Toast.show({
+					type: 'success',
+					text1: 'Success',
+					text2: 'Habit logged successfully!',
+				});
+				// Refresh habits to update the streak
+				fetchHabits();
+			}
+			setLogFormVisible(false);
+			setSelectedHabitId(null);
+		} catch (error) {
+			console.error('Error logging habit:', error);
+			Toast.show({
+				type: 'error',
+				text1: 'Error',
+				text2: 'Failed to log habit. Please try again.',
+			});
+		}
 	};
 
 	const handleAddGoal = () => {
 		setGoalModalVisible(true);
 	};
 
-	const handleGoalSubmit = () => {
+	const handleGoalSubmit = async () => {
 		// Validate form
 		if (!goalName.trim()) {
 			Alert.alert('Error', 'Please enter a goal name');
+			return;
+		}
+		if (!goalDescription.trim()) {
+			Alert.alert('Error', 'Please enter a goal description');
 			return;
 		}
 		if (
@@ -121,28 +172,40 @@ export default function HomeScreen() {
 			Alert.alert('Error', 'Please enter a valid duration (positive number)');
 			return;
 		}
+		if (!goalUnit) {
+			Alert.alert('Error', 'Please select a unit');
+			return;
+		}
 
 		const goalData = {
 			name: goalName.trim(),
 			description: goalDescription.trim(),
-			color: '', // can be added later
-			icon: '', // can be added later
+			color: '#6366F1', // Default color
+			icon: 'flag', // Default icon
 			goal_duration: Number(goalDuration),
 			goal_unit: goalUnit,
 		};
 
-		console.log('Goal submitted:', goalData);
+		try {
+			await authAPI.createGoal(goalData);
 
-		// Reset form
-		setGoalModalVisible(false);
-		setGoalName('');
-		setGoalDescription('');
-		setGoalDuration('');
-		setGoalUnit('days');
+			// Reset form
+			setGoalModalVisible(false);
+			setGoalName('');
+			setGoalDescription('');
+			setGoalDuration('');
+			setGoalUnit('days');
 
-		Alert.alert('Success', 'Your goal has been added successfully!', [
-			{ text: 'OK' },
-		]);
+			// Show success message
+			Toast.show({
+				type: 'success',
+				text1: 'Success',
+				text2: 'Goal successfully created',
+			});
+		} catch (error) {
+			console.error('Error creating goal:', error);
+			Alert.alert('Error', 'Failed to create goal. Please try again.');
+		}
 	};
 
 	const handleModalClose = () => {
@@ -152,6 +215,22 @@ export default function HomeScreen() {
 		setGoalDescription('');
 		setGoalDuration('');
 		setGoalUnit('days');
+	};
+
+	const handleUnitSelect = (value: string) => {
+		setGoalUnit(value);
+		setUnitPickerVisible(false);
+	};
+
+	const isFormValid = () => {
+		return (
+			goalName.trim() !== '' &&
+			goalDescription.trim() !== '' &&
+			goalDuration.trim() !== '' &&
+			!isNaN(Number(goalDuration)) &&
+			Number(goalDuration) > 0 &&
+			goalUnit !== ''
+		);
 	};
 
 	return (
@@ -179,21 +258,49 @@ export default function HomeScreen() {
 								</Text>
 							</View>
 						</View>
-						<View style={styles.logStatusRow}>
-							<Text
-								style={[styles.notLoggedText, isLogged && styles.loggedText]}
-							>
-								{isLogged ? 'Logged' : 'Not Logged'}
-							</Text>
-							<TouchableOpacity
-								style={[styles.logButton, isLogged && styles.loggedButton]}
-								onPress={handleLogPress}
-							>
-								<Text style={styles.logButtonText}>
-									{isLogged ? 'Update Log' : 'Log It'}
-								</Text>
-							</TouchableOpacity>
+						<View style={styles.habitPreviewHeader}>
+							<Ionicons name="list" size={20} color="#6366F1" />
+							<Text style={styles.habitPreviewTitle}>Current Habit</Text>
 						</View>
+						{habits.length > 0 &&
+							habits.map((habit) => (
+								<View key={habit.id} style={styles.habitPreviewContainer}>
+									<View style={styles.habitPreviewContent}>
+										<Text style={styles.habitPreviewName}>{habit.name}</Text>
+										<View style={styles.streakBadge}>
+											<Text style={styles.streakBadgeText}>
+												{habit.current_streak?.current_streak || 0} days streak
+											</Text>
+										</View>
+									</View>
+									<View style={styles.logStatusRow}>
+										<Text
+											style={[
+												styles.notLoggedText,
+												loggedHabits[habit.id] && styles.loggedText,
+											]}
+										>
+											{loggedHabits[habit.id] ? 'Logged' : 'Not Logged'}
+										</Text>
+										<TouchableOpacity
+											style={[
+												styles.logButton,
+												loggedHabits[habit.id] && styles.loggedButton,
+											]}
+											onPress={() => handleLogPress(habit.id)}
+										>
+											<Text
+												style={[
+													styles.logButtonText,
+													loggedHabits[habit.id] && styles.loggedButtonText,
+												]}
+											>
+												{loggedHabits[habit.id] ? 'Logged' : 'Log it'}
+											</Text>
+										</TouchableOpacity>
+									</View>
+								</View>
+							))}
 
 						{isLogged && logData && (
 							<View style={styles.logSummary}>
@@ -245,14 +352,26 @@ export default function HomeScreen() {
 				{/* Progress Section */}
 				<View style={styles.section}>
 					<Text style={styles.sectionTitle}>Your Progress</Text>
-					<View style={styles.card}>
-						<Text style={styles.progressTitle}>Days Smoke-Free</Text>
-						<View style={styles.progressValueContainer}>
-							<Text style={styles.progressValue}>{daysSmokeFreeMockData}</Text>
-							<Text style={styles.progressUnit}>days</Text>
-						</View>
-						<Text style={styles.progressMessage}>Your progress matters!</Text>
-					</View>
+
+					{habits.length > 0 &&
+						habits.map((habit) => (
+							<View key={habit.id} style={{ marginBottom: 12 }}>
+								<View style={styles.card}>
+									<Text style={styles.progressTitle}>
+										{habit.name} Progress
+									</Text>
+									<View style={styles.progressValueContainer}>
+										<Text style={styles.progressValue}>
+											{habit.current_streak?.current_streak || 0}
+										</Text>
+										<Text style={styles.progressUnit}>days</Text>
+									</View>
+									<Text style={styles.progressMessage}>
+										{habit.description}
+									</Text>
+								</View>
+							</View>
+						))}
 				</View>
 
 				{/* Motivational Boost */}
@@ -279,6 +398,56 @@ export default function HomeScreen() {
 					</View>
 				</View>
 
+				{/* Habits Section */}
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Your Habits</Text>
+					{loadingHabits ? (
+						<View style={styles.card}>
+							<ActivityIndicator color="#6366F1" size="small" />
+						</View>
+					) : habits.length > 0 ? (
+						habits.map((habit) => (
+							<View key={habit.id} style={[styles.card, { marginBottom: 12 }]}>
+								<View style={styles.habitHeader}>
+									<View
+										style={[
+											styles.habitIconContainer,
+											{ backgroundColor: habit.color },
+										]}
+									>
+										<Ionicons
+											name={habit.icon as any}
+											size={24}
+											color="white"
+										/>
+									</View>
+									<View style={styles.habitInfo}>
+										<Text style={styles.habitName}>{habit.name}</Text>
+										<Text style={styles.habitDescription} numberOfLines={2}>
+											{habit.description}
+										</Text>
+									</View>
+								</View>
+								<View style={styles.streakInfo}>
+									<Text style={styles.streakText}>
+										Current Streak:{' '}
+										{habit.current_streak?.max_streak_achieved || 0} days
+									</Text>
+									<Text style={styles.streakText}>
+										Max Streak: {habit.current_streak?.target_days || 0} days
+									</Text>
+								</View>
+							</View>
+						))
+					) : (
+						<View style={styles.card}>
+							<Text style={styles.emptyText}>
+								No habits yet. Add your first habit!
+							</Text>
+						</View>
+					)}
+				</View>
+
 				<View style={styles.bottomSpacer} />
 			</ScrollView>
 
@@ -297,7 +466,7 @@ export default function HomeScreen() {
 				visible={logFormVisible}
 				onClose={handleLogFormClose}
 				onSave={handleLogFormSave}
-				date={today}
+				habitId={selectedHabitId}
 			/>
 
 			{/* Improved Goal Modal */}
@@ -321,7 +490,9 @@ export default function HomeScreen() {
 
 						<ScrollView showsVerticalScrollIndicator={false}>
 							<View style={styles.formGroup}>
-								<Text style={styles.inputLabel}>Goal Name *</Text>
+								<Text style={styles.inputLabel}>
+									Goal Name <Text style={styles.requiredMark}>*</Text>
+								</Text>
 								<TextInput
 									style={styles.input}
 									placeholder="e.g., Quit Smoking, Exercise Daily"
@@ -332,7 +503,9 @@ export default function HomeScreen() {
 							</View>
 
 							<View style={styles.formGroup}>
-								<Text style={styles.inputLabel}>Description</Text>
+								<Text style={styles.inputLabel}>
+									Description <Text style={styles.requiredMark}>*</Text>
+								</Text>
 								<TextInput
 									style={[styles.input, styles.textArea]}
 									placeholder="Describe your goal and why it matters to you..."
@@ -350,7 +523,9 @@ export default function HomeScreen() {
 
 							<View style={styles.durationContainer}>
 								<View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-									<Text style={styles.inputLabel}>Duration *</Text>
+									<Text style={styles.inputLabel}>
+										Duration <Text style={styles.requiredMark}>*</Text>
+									</Text>
 									<TextInput
 										style={styles.input}
 										placeholder="30"
@@ -365,22 +540,20 @@ export default function HomeScreen() {
 									/>
 								</View>
 								<View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
-									<Text style={styles.inputLabel}>Unit</Text>
-									<View style={styles.pickerContainer}>
-										<Picker
-											selectedValue={goalUnit}
-											onValueChange={(itemValue: string) =>
-												setGoalUnit(itemValue)
-											}
-											style={styles.picker}
-											mode="dropdown"
-											dropdownIconColor="#666"
-										>
-											<Picker.Item label="Days" value="days" />
-											<Picker.Item label="Weeks" value="weeks" />
-											<Picker.Item label="Months" value="months" />
-										</Picker>
-									</View>
+									<Text style={styles.inputLabel}>
+										Unit <Text style={styles.requiredMark}>*</Text>
+									</Text>
+									<TouchableOpacity
+										style={styles.unitPickerBox}
+										onPress={() => setUnitPickerVisible(true)}
+										activeOpacity={0.7}
+									>
+										<Text style={styles.unitPickerText}>
+											{unitOptions.find((opt) => opt.value === goalUnit)
+												?.label || 'Select Unit'}
+										</Text>
+										<Ionicons name="chevron-down" size={20} color="#666" />
+									</TouchableOpacity>
 								</View>
 							</View>
 						</ScrollView>
@@ -395,14 +568,78 @@ export default function HomeScreen() {
 								</Text>
 							</TouchableOpacity>
 							<TouchableOpacity
-								style={styles.modalButton}
+								style={[
+									styles.modalButton,
+									!isFormValid() && styles.disabledButton,
+								]}
 								onPress={handleGoalSubmit}
+								disabled={!isFormValid()}
 							>
-								<Text style={styles.modalButtonText}>Add Goal</Text>
+								<Text
+									style={[
+										styles.modalButtonText,
+										!isFormValid() && styles.disabledButtonText,
+									]}
+								>
+									Add Goal
+								</Text>
 							</TouchableOpacity>
 						</View>
 					</View>
 				</KeyboardAvoidingView>
+			</Modal>
+
+			{/* Unit Picker Bottom Sheet */}
+			<Modal
+				visible={unitPickerVisible}
+				transparent={true}
+				animationType="slide"
+				onRequestClose={() => setUnitPickerVisible(false)}
+			>
+				<View style={styles.bottomSheetOverlay}>
+					<TouchableOpacity
+						style={styles.bottomSheetBackdrop}
+						activeOpacity={1}
+						onPress={() => setUnitPickerVisible(false)}
+					/>
+					<View style={styles.bottomSheetContainer}>
+						<View style={styles.bottomSheetHandle} />
+						<View style={styles.bottomSheetHeader}>
+							<Text style={styles.bottomSheetTitle}>Select Duration Unit</Text>
+							<TouchableOpacity
+								style={styles.bottomSheetCloseButton}
+								onPress={() => setUnitPickerVisible(false)}
+							>
+								<Ionicons name="close" size={24} color="#666" />
+							</TouchableOpacity>
+						</View>
+
+						<View style={styles.optionsList}>
+							{unitOptions.map((option) => (
+								<TouchableOpacity
+									key={option.value}
+									style={[
+										styles.optionItem,
+										goalUnit === option.value && styles.optionItemSelected,
+									]}
+									onPress={() => handleUnitSelect(option.value)}
+								>
+									<Text
+										style={[
+											styles.optionText,
+											goalUnit === option.value && styles.optionTextSelected,
+										]}
+									>
+										{option.label}
+									</Text>
+									{goalUnit === option.value && (
+										<Ionicons name="checkmark" size={20} color="#6366F1" />
+									)}
+								</TouchableOpacity>
+							))}
+						</View>
+					</View>
+				</View>
 			</Modal>
 		</View>
 	);
@@ -473,6 +710,7 @@ const styles = StyleSheet.create({
 		color: '#333',
 	},
 	logStatusRow: {
+		marginTop: 16,
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
@@ -495,6 +733,10 @@ const styles = StyleSheet.create({
 		backgroundColor: '#27AE60',
 	},
 	logButtonText: {
+		color: '#6366F1',
+		fontWeight: '600',
+	},
+	loggedButtonText: {
 		color: 'white',
 		fontWeight: '600',
 	},
@@ -681,20 +923,93 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		paddingHorizontal: 20,
 	},
-	pickerContainer: {
+	unitPickerBox: {
 		borderWidth: 1,
 		borderColor: '#E5E5E5',
 		borderRadius: 8,
 		backgroundColor: '#FAFAFA',
-		overflow: 'hidden',
-		justifyContent: 'center',
+		padding: 12,
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
 		minHeight: 50,
 	},
-	picker: {
-		height: Platform.OS === 'ios' ? 50 : 50,
-		width: '100%',
+	unitPickerText: {
+		fontSize: 16,
 		color: '#333',
+		flex: 1,
+	},
+	optionsList: {
+		paddingVertical: 8,
+	},
+	optionItem: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingVertical: 16,
+		paddingHorizontal: 20,
+		borderBottomWidth: 1,
+		borderBottomColor: '#F0F0F0',
+	},
+	optionItemSelected: {
+		backgroundColor: '#F5F5FF',
+	},
+	optionText: {
+		fontSize: 16,
+		color: '#333',
+	},
+	optionTextSelected: {
+		color: '#6366F1',
+		fontWeight: '600',
+	},
+	bottomSheetOverlay: {
+		flex: 1,
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		justifyContent: 'flex-end',
+	},
+	bottomSheetBackdrop: {
+		...StyleSheet.absoluteFillObject,
 		backgroundColor: 'transparent',
+	},
+	bottomSheetContainer: {
+		backgroundColor: 'white',
+		borderTopLeftRadius: 20,
+		borderTopRightRadius: 20,
+		paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+		maxHeight: '60%',
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: -2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 3.84,
+		elevation: 5,
+	},
+	bottomSheetHandle: {
+		width: 40,
+		height: 4,
+		backgroundColor: '#E5E5E5',
+		borderRadius: 2,
+		alignSelf: 'center',
+		marginTop: 8,
+		marginBottom: 8,
+	},
+	bottomSheetHeader: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		padding: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: '#E5E5E5',
+	},
+	bottomSheetTitle: {
+		fontSize: 18,
+		fontWeight: '600',
+		color: '#333',
+	},
+	bottomSheetCloseButton: {
+		padding: 4,
 	},
 	modalButtonRow: {
 		flexDirection: 'row',
@@ -722,5 +1037,100 @@ const styles = StyleSheet.create({
 	},
 	cancelButtonText: {
 		color: '#666',
+	},
+	requiredMark: {
+		color: '#E74C3C',
+		fontSize: 16,
+	},
+	disabledButton: {
+		backgroundColor: '#E5E5E5',
+		opacity: 0.7,
+	},
+	disabledButtonText: {
+		color: '#999',
+	},
+	habitHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 12,
+	},
+	habitIconContainer: {
+		width: 48,
+		height: 48,
+		borderRadius: 24,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginRight: 12,
+	},
+	habitInfo: {
+		flex: 1,
+	},
+	habitName: {
+		fontSize: 18,
+		fontWeight: '600',
+		color: '#333',
+		marginBottom: 4,
+	},
+	habitDescription: {
+		fontSize: 14,
+		color: '#666',
+		lineHeight: 20,
+	},
+	streakInfo: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		paddingTop: 12,
+		borderTopWidth: 1,
+		borderTopColor: '#E5E5E5',
+	},
+	streakText: {
+		fontSize: 14,
+		color: '#666',
+	},
+	emptyText: {
+		fontSize: 16,
+		color: '#666',
+		textAlign: 'center',
+		padding: 20,
+	},
+	habitPreviewContainer: {
+		backgroundColor: '#F8F9FF',
+		borderRadius: 12,
+		padding: 16,
+		marginTop: 12,
+	},
+	habitPreviewHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 8,
+	},
+	habitPreviewTitle: {
+		fontSize: 14,
+		fontWeight: '600',
+		color: '#6366F1',
+		marginLeft: 8,
+	},
+	habitPreviewContent: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+	},
+	habitPreviewName: {
+		fontSize: 16,
+		fontWeight: '500',
+		color: '#333',
+		flex: 1,
+	},
+	streakBadge: {
+		backgroundColor: '#E8E9FF',
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+		borderRadius: 16,
+		marginLeft: 12,
+	},
+	streakBadgeText: {
+		fontSize: 12,
+		fontWeight: '600',
+		color: '#6366F1',
 	},
 });

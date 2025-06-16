@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-type LogFormProps = {
+export interface LogFormProps {
 	visible: boolean;
 	onClose: () => void;
-	onSave: (data: LogData) => void;
-	date: Date;
-};
+	onSave: (data: LogData) => Promise<void>;
+	habitId: number | null;
+}
 
 export type LogData = {
 	date: Date;
@@ -40,7 +40,7 @@ export default function LogForm({
 	visible,
 	onClose,
 	onSave,
-	date,
+	habitId,
 }: LogFormProps) {
 	const [selectedMood, setSelectedMood] = useState<string>('');
 	const [description, setDescription] = useState('');
@@ -81,7 +81,7 @@ export default function LogForm({
 		}
 
 		const logData: LogData = {
-			date,
+			date: new Date(),
 			mood: selectedMood,
 			description,
 			habitCompleted: habitCompleted || false,
