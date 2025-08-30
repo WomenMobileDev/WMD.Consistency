@@ -1,18 +1,17 @@
+import { useAuth } from '@/context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
+	Alert,
+	Dimensions,
+	ScrollView,
 	StyleSheet,
 	Text,
-	View,
-	Image,
-	ScrollView,
-	Dimensions,
 	TouchableOpacity,
-	Alert,
+	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -303,17 +302,6 @@ export default function ProfileScreen() {
 				<View style={{ height: 80 }} />
 			</ScrollView>
 
-			{/* Tab navigation */}
-			<View style={styles.tabBar}>
-				<Link href="/(tabs)" style={styles.tabItem}>
-					<Ionicons name="home-outline" size={24} color="#666" />
-					<Text style={styles.tabLabel}>Today</Text>
-				</Link>
-				<View style={[styles.tabItem, styles.activeTab]}>
-					<Ionicons name="person" size={24} color="#6366F1" />
-					<Text style={[styles.tabLabel, styles.activeTabLabel]}>Profile</Text>
-				</View>
-			</View>
 		</SafeAreaView>
 	);
 }
