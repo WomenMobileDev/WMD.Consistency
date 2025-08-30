@@ -5,14 +5,14 @@ import {
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect } from 'react';
-import { Platform, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider } from '@/context/AuthContext';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { disableMocking, enableMocking, mockingUtils, startMocking } from '@/mocks';
 import Toast from 'react-native-toast-message';
 
 // Keep the splash screen visible while we fetch resources
@@ -35,6 +35,30 @@ export default function RootLayout() {
 	const [loaded, error] = useFonts({
 		SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
 	});
+
+	// Initialize MSW mocking
+	useEffect(() => {
+		console.log('🔧 Initializing API mocking...');
+		
+		if (mockingUtils.shouldEnableMocking()) {
+			try {
+				startMocking();
+				mockingUtils.logMockingStatus(true);
+				console.log('✅ API mocking enabled successfully');
+				
+				// Make toggle functions available globally for debugging
+				if (__DEV__) {
+					(global as any).enableMocking = enableMocking;
+					(global as any).disableMocking = disableMocking;
+					console.log('🎛️ Global utils: enableMocking() and disableMocking()');
+				}
+			} catch (error) {
+				console.error('❌ Failed to start API mocking:', error);
+			}
+		} else {
+			mockingUtils.logMockingStatus(false);
+		}
+	}, []);
 
 	// Handle any errors
 	useEffect(() => {

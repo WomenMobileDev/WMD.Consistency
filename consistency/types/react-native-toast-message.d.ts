@@ -1,6 +1,5 @@
 declare module 'react-native-toast-message' {
-	import { ComponentType } from 'react';
-
+	
 	export interface ToastProps {
 		type?: 'success' | 'error' | 'info';
 		text1?: string;
@@ -14,9 +13,12 @@ declare module 'react-native-toast-message' {
 		onHide?: () => void;
 	}
 
-	export const Toast: {
-		(props: ToastProps): JSX.Element;
+	interface ToastComponent {
+		(props?: any): JSX.Element;
 		show: (props: ToastProps) => void;
 		hide: () => void;
-	};
+	}
+
+	const Toast: ToastComponent;
+	export default Toast;
 }

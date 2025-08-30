@@ -1,8 +1,7 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base API configuration
-const API_BASE_URL = 'https://c273-122-172-83-60.ngrok-free.app/api/v1'; // Replace with your actual API URL
+const API_BASE_URL = 'https://11b204d31f58.ngrok-free.app/api/v1'; // Replace with your actual API URL
 
 const api = axios.create({
 	baseURL: API_BASE_URL,
@@ -10,6 +9,20 @@ const api = axios.create({
 		'Content-Type': 'application/json',
 	},
 });
+
+// Add interceptor directly to this instance for debugging
+api.interceptors.request.use((config) => {
+	console.log('🔧 API Instance: Intercepting', config.method?.toUpperCase(), config.url);
+	console.log('🔧 API Instance: BaseURL:', config.baseURL);
+	return config;
+}, (error) => {
+	console.error('🔧 API Instance: Request error:', error);
+	return Promise.reject(error);
+});
+
+// Apply direct mocking
+import { applyDirectMocking } from '../mocks/api-mock';
+applyDirectMocking(api);
 
 // Types for authentication
 export interface RegisterRequest {
@@ -86,9 +99,10 @@ export interface Habit {
 	color: string;
 	icon: string;
 	is_active: boolean;
+	status: string;
 	created_at: string;
 	updated_at: string;
-	current_streak: {
+	current_streak?: {
 		id: number;
 		habit_id: number;
 		target_days: number;
@@ -101,15 +115,15 @@ export interface Habit {
 		status: string;
 		created_at: string;
 		updated_at: string;
-		check_ins: Array<{
-			id: number;
-			streak_id: number;
-			check_in_date: string;
-			notes: string;
-			created_at: string;
-			updated_at: string;
-		}>;
 	};
+	check_ins?: Array<{
+		id: number;
+		streak_id: number;
+		check_in_date: string;
+		notes: string;
+		created_at: string;
+		updated_at: string;
+	}>;
 }
 
 // Authentication API functions
@@ -130,17 +144,38 @@ export const authAPI = {
 	},
 
 	getHabits: async (): Promise<{ data: Habit[] }> => {
-		const response = await api.get(`${API_BASE_URL}/habits`);
+		console.log('🔧 API: Making habits request to:', `${API_BASE_URL}/habits`);
+		console.log('🔧 API: Axios baseURL:', api.defaults.baseURL);
+		console.log('🔧 API: Final URL will be:', api.defaults.baseURL + '/habits');
+		const response = await api.get('/habits'); // Use relative path since baseURL is set
+		console.log('🔧 API: Raw response structure:', {
+			hasSuccess: !!response.data.success,
+			hasData: !!response.data.data,
+			dataType: Array.isArray(response.data.data) ? 'array' : typeof response.data.data,
+			dataLength: response.data.data?.length,
+			fullResponse: response.data
+		});
+		
+		// Handle both mock response format and real API format
+		if (response.data.success && response.data.data) {
+			// Mock response format: { success: true, data: [...] }
+			console.log('🔧 API: Using mock format, returning:', response.data.data.length, 'habits');
+			return { data: response.data.data };
+		}
+		// Real API format: { data: [...] }
+		console.log('🔧 API: Using real API format');
 		return response.data;
 	},
 
 	createCheckIn: async (habitId: number, notes: string) => {
+		console.log('🔧 API: Creating check-in for habit', habitId, 'with notes:', notes);
 		const response = await api.post(
-			`${API_BASE_URL}/habits/${habitId}/check-ins`,
+			`/habits/${habitId}/check-in`,
 			{
 				notes: notes,
 			}
 		);
+		console.log('✅ API: Check-in created successfully:', response.data);
 		return response.data;
 	},
 };
