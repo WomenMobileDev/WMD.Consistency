@@ -52,6 +52,7 @@ export default function HomeScreen() {
 	const daysSmokeFreeMockData = 7;
 	const [quote, setQuote] = useState<Quote | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [isGoalCreating, setIsGoalCreating] = useState(false);
 	const insets = useSafeAreaInsets();
 	const [logFormVisible, setLogFormVisible] = useState(false);
 	const [isLogged, setIsLogged] = useState(false);
@@ -102,14 +103,11 @@ export default function HomeScreen() {
 			console.log('📋 Fetching habits...');
 			const response = await authAPI.getHabits();
 			console.log('✅ Habits loaded:', response.data?.length || 0, 'habits');
-			console.log('📋 Habit names:', response.data?.map(h => h.name) || []);
 			setHabits(response.data);
 			
 			// Check if habits have been logged today
 			const today = format(new Date(), 'yyyy-MM-dd');
 			const loggedToday: { [key: number]: boolean } = {};
-			
-			console.log('🔍 Checking habits for today:', today);
 			
 			response.data?.forEach(habit => {
 				loggedToday[habit.id] = false; // Default to false
@@ -123,13 +121,9 @@ export default function HomeScreen() {
 					
 					loggedToday[habit.id] = hasCheckInToday;
 					
-					console.log('🔍 Habit', habit.name + ':', 
-						'has', habit.check_ins.length, 'check-ins,',
-						'logged today:', loggedToday[habit.id],
-						'latest check-in:', habit.check_ins[habit.check_ins.length - 1].check_in_date
-					);
-				} else {
-					console.log('🔍 Habit', habit.name + ':', 'no check-ins');
+					if (hasCheckInToday) {
+						console.log('✅', habit.name, 'already logged today');
+					}
 				}
 			});
 			
@@ -186,6 +180,7 @@ export default function HomeScreen() {
 
 	const handleAddGoal = () => {
 		setGoalModalVisible(true);
+		fetchHabits()
 	};
 
 	const handleGoalSubmit = async () => {
@@ -219,7 +214,7 @@ export default function HomeScreen() {
 			goal_duration: Number(goalDuration),
 			goal_unit: goalUnit,
 		};
-
+		setIsGoalCreating(true)
 		try {
 			await authAPI.createGoal(goalData);
 
@@ -239,6 +234,8 @@ export default function HomeScreen() {
 		} catch (error) {
 			console.error('Error creating goal:', error);
 			Alert.alert('Error', 'Failed to create goal. Please try again.');
+		} finally {
+			setIsGoalCreating(false);
 		}
 	};
 
@@ -394,7 +391,7 @@ export default function HomeScreen() {
 																styles.streakBadgeScrollText,
 																isInactive && styles.streakBadgeScrollTextInactive
 															]}>
-																{habit.check_ins?.length || 0} days
+																{habit.current_streak?.current_streak || 0} days
 															</Text>
 														</View>
 													</View>
@@ -671,7 +668,7 @@ export default function HomeScreen() {
 									!isFormValid() && styles.disabledButton,
 								]}
 								onPress={handleGoalSubmit}
-								disabled={!isFormValid()}
+								disabled={!isFormValid() || isGoalCreating}
 							>
 								<Text
 									style={[
@@ -681,6 +678,7 @@ export default function HomeScreen() {
 								>
 									Add Goal
 								</Text>
+								{isGoalCreating && <ActivityIndicator color="#6366F1" size="small" />}
 							</TouchableOpacity>
 						</View>
 					</View>

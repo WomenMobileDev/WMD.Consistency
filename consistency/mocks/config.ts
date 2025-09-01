@@ -2,7 +2,7 @@
 
 export const mockConfig = {
   // Set this to false to use real API in development
-  ENABLE_MOCKING: true,
+  ENABLE_MOCKING: false,
   
   // Set this to true for more detailed debug logs
   DEBUG_LOGS: true,

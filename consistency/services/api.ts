@@ -20,9 +20,7 @@ api.interceptors.request.use((config) => {
 	return Promise.reject(error);
 });
 
-// Apply direct mocking
-import { applyDirectMocking } from '../mocks/api-mock';
-applyDirectMocking(api);
+// Real API - no mocking
 
 // Types for authentication
 export interface RegisterRequest {
@@ -139,7 +137,7 @@ export const authAPI = {
 	},
 
 	createGoal: async (data: GoalRequest): Promise<GoalResponse> => {
-		const response = await api.post(`${API_BASE_URL}/habits`, data);
+		const response = await api.post(`${API_BASE_URL}/habits`, {...data,target_days:data.goal_duration});
 		return response.data;
 	},
 
@@ -168,14 +166,14 @@ export const authAPI = {
 	},
 
 	createCheckIn: async (habitId: number, notes: string) => {
-		console.log('🔧 API: Creating check-in for habit', habitId, 'with notes:', notes);
+		console.log('🌐 Creating check-in for habit', habitId);
 		const response = await api.post(
-			`/habits/${habitId}/check-in`,
+			`/habits/${habitId}/check-ins`,
 			{
 				notes: notes,
 			}
 		);
-		console.log('✅ API: Check-in created successfully:', response.data);
+		console.log('✅ Check-in created successfully');
 		return response.data;
 	},
 };
