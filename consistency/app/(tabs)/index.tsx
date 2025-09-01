@@ -48,11 +48,10 @@ const FALLBACK_QUOTES = [
 
 export default function HomeScreen() {
 	const today = new Date();
-	const formattedDate = format(today, 'MMMM d, yyyy');
-	const daysSmokeFreeMockData = 7;
 	const [quote, setQuote] = useState<Quote | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [isGoalCreating, setIsGoalCreating] = useState(false);
+	const [isFetchingHabits, setIsFetchingHabits] = useState(false);
 	const insets = useSafeAreaInsets();
 	const [logFormVisible, setLogFormVisible] = useState(false);
 	const [isLogged, setIsLogged] = useState(false);
@@ -81,6 +80,11 @@ export default function HomeScreen() {
 	}, []);
 
 
+// 2025-09-01T00:00:00Z
+  const isLoggedInToday = (date: string) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    return format(new Date(date), 'yyyy-MM-dd') === today;
+  };
 
 	const fetchRandomQuote = async () => {
 		setLoading(true);
@@ -100,6 +104,7 @@ export default function HomeScreen() {
 
 	const fetchHabits = async () => {
 		try {
+      setIsFetchingHabits(true);
 			console.log('📋 Fetching habits...');
 			const response = await authAPI.getHabits();
 			console.log('✅ Habits loaded:', response.data?.length || 0, 'habits');
@@ -133,6 +138,7 @@ export default function HomeScreen() {
 			console.error('❌ Error fetching habits:', error);
 		} finally {
 			setLoadingHabits(false);
+			setIsFetchingHabits(false);
 		}
 	};
 
@@ -296,6 +302,7 @@ export default function HomeScreen() {
 								<Text style={styles.habitCount}>({habits.length})</Text>
 							)}
 						</View>
+            {isFetchingHabits && <ActivityIndicator color="#6366F1" size="small" />}
 						{habits?.length > 0 && (
 							<>
 								{habits.length <= 3 ? (
@@ -366,7 +373,8 @@ export default function HomeScreen() {
 										style={styles.habitsScrollView}
 									>
 										{habits.map((habit) => {
-											const isInactive = !habit.is_active && habit.status === 'inactive';
+											const isInactive = habit.status === 'inactive';
+                      const isLoggedToday = habit.current_streak?.last_check_in_date && isLoggedInToday(habit.current_streak?.last_check_in_date);
 											return (
 												<View key={habit.id} style={[
 													styles.habitScrollCard,
@@ -399,12 +407,20 @@ export default function HomeScreen() {
 														style={[
 															styles.logButtonScroll,
 															loggedHabits[habit.id] && styles.loggedButtonScroll,
-															isInactive && styles.logButtonScrollInactive
+															isInactive && styles.logButtonScrollInactive,
+                              isLoggedToday && styles.loggedInToday
 														]}
 														onPress={() => !isInactive && !loggedHabits[habit.id] && handleLogPress(habit.id)}
-														disabled={isInactive || loggedHabits[habit.id]}
+														disabled={isInactive || loggedHabits[habit.id] || Boolean(isLoggedToday)}
 													>
-														<Text
+														{isLoggedToday ? (
+															<Text style={styles.alreadyLoggedToday}>Logged</Text>
+														) : (
+															<Text>
+																Log
+															</Text>
+														)}
+														{/* <Text
 															style={[
 																styles.logButtonScrollText,
 																loggedHabits[habit.id] && styles.loggedButtonScrollText,
@@ -412,7 +428,7 @@ export default function HomeScreen() {
 															]}
 														>
 															{isInactive ? 'Disabled' : (loggedHabits[habit.id] ? '✓ Logged' : 'Log')}
-														</Text>
+														</Text> */}
 													</TouchableOpacity>
 												</View>
 											);
@@ -666,6 +682,7 @@ export default function HomeScreen() {
 								style={[
 									styles.modalButton,
 									!isFormValid() && styles.disabledButton,
+                  isGoalCreating && styles.disabledButton
 								]}
 								onPress={handleGoalSubmit}
 								disabled={!isFormValid() || isGoalCreating}
@@ -674,11 +691,11 @@ export default function HomeScreen() {
 									style={[
 										styles.modalButtonText,
 										!isFormValid() && styles.disabledButtonText,
+                    isGoalCreating && styles.disabledButtonText
 									]}
 								>
 									Add Goal
 								</Text>
-								{isGoalCreating && <ActivityIndicator color="#6366F1" size="small" />}
 							</TouchableOpacity>
 						</View>
 					</View>
@@ -804,6 +821,11 @@ const styles = StyleSheet.create({
 		marginLeft: 8,
 		fontSize: 16,
 		color: '#333',
+	},
+	loggedInToday: {
+		fontSize: 16,
+		color: '#27AE60',
+		backgroundColor: '#E0F8E9',
 	},
 	logStatusRow: {
 		marginTop: 16,
@@ -944,6 +966,11 @@ const styles = StyleSheet.create({
 	bottomSpacer: {
 		height: 20,
 	},
+  alreadyLoggedToday: {
+    fontSize: 16,
+    color: '#27AE60',
+    backgroundColor: '#E0F8E9',
+  },
 	// Floating Action Button
 	fab: {
 		position: 'absolute',
