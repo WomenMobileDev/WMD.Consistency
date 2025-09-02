@@ -124,6 +124,70 @@ export interface Habit {
 	}>;
 }
 
+export interface UserProfileData {
+	id: number;
+	email: string;
+	name: string;
+	created_at: string;
+	overview: {
+		total_habits: number;
+		active_habits: number;
+		total_check_ins: number;
+		total_achievements: number;
+		days_since_joined: number;
+		overall_consistency: number;
+		weekly_consistency: number;
+		monthly_consistency: number;
+	};
+	streak_insights: {
+		current_longest_streak: number;
+		best_streak_ever: number;
+		average_streak_length: number;
+		active_streaks_count: number;
+	};
+	consistency_chart: Array<{
+		date: string;
+		percentage: number;
+		check_ins: number;
+		total_habits: number;
+	}>;
+	top_habits: Array<{
+		habit_id: number;
+		habit_name: string;
+		consistency_rate: number;
+		current_streak: number;
+		total_check_ins: number;
+		last_check_in: string;
+	}>;
+	recent_achievements: Array<{
+		id: number;
+		user_id: number;
+		habit_id: number;
+		achievement_type: string;
+		target_days: number;
+		achieved_at: string;
+		metadata: {
+			streak_id: number;
+			habit_name: string;
+		};
+	}>;
+	most_consistent_habit: {
+		habit_id: number;
+		habit_name: string;
+		consistency_rate: number;
+		current_streak: number;
+		total_check_ins: number;
+		last_check_in: string;
+	};
+	improvement_trend: string;
+}
+
+export interface UserProfileResponse {
+	success: boolean;
+	message: string;
+	data: UserProfileData;
+}
+
 // Authentication API functions
 export const authAPI = {
 	register: async (data: RegisterRequest): Promise<AuthResponse> => {
@@ -175,6 +239,26 @@ export const authAPI = {
 		);
 		console.log('✅ Check-in created successfully');
 		return response.data;
+	},
+
+	getUserProfile: async (): Promise<UserProfileResponse> => {
+		console.log('🌐 API Request: GET /user/profile');
+		try {
+			const response = await api.get('/user/profile');
+			console.log('🌐 API Response: User profile data received', response.data);
+			return response.data;
+		} catch (error: any) {
+			console.error('🌐 API Error:', error.response?.status, error.response?.data || error.message);
+			
+			// If endpoint doesn't exist (404) or other errors, throw with specific message
+			if (error.response?.status === 404) {
+				throw new Error('Profile endpoint not available yet');
+			} else if (error.response?.status === 401) {
+				throw new Error('Authentication required');
+			} else {
+				throw new Error(`API Error: ${error.response?.status || error.message}`);
+			}
+		}
 	},
 };
 
