@@ -97,6 +97,15 @@ export default function HomeScreen() {
     return format(new Date(date), 'yyyy-MM-dd') === today;
   };
 
+  // Calculate days until habit removal for disabled habits
+  const getDaysUntilRemoval = (updatedAt: string) => {
+    const now = new Date();
+    const updatedDate = new Date(updatedAt);
+    const daysSinceDisabled = Math.floor((now.getTime() - updatedDate.getTime()) / (24 * 60 * 60 * 1000));
+    const daysUntilRemoval = Math.max(0, 3 - daysSinceDisabled);
+    return { daysSinceDisabled, daysUntilRemoval };
+  };
+
 	const fetchRandomQuote = async () => {
 		setLoading(true);
 		try {
@@ -119,13 +128,40 @@ export default function HomeScreen() {
 			console.log('📋 Fetching habits...');
 			const response = await authAPI.getHabits();
 			console.log('✅ Habits loaded:', response.data?.length || 0, 'habits');
-			setHabits(response.data);
+			
+			// Filter out disabled habits that are older than 3 days
+			const now = new Date();
+			const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
+			
+			const filteredHabits = response.data?.filter(habit => {
+				// Keep active habits
+				if (habit.status === 'active') {
+					return true;
+				}
+				
+				// For inactive habits, check if they were disabled less than 3 days ago
+				if (habit.status === 'inactive') {
+					const updatedAt = new Date(habit.updated_at);
+					const shouldKeep = updatedAt > threeDaysAgo;
+					
+					if (!shouldKeep) {
+						console.log('🗑️ Removing disabled habit:', habit.name, 'disabled on:', format(updatedAt, 'yyyy-MM-dd'));
+					}
+					
+					return shouldKeep;
+				}
+				
+				return true; // Keep habits with other statuses
+			}) || [];
+			
+			console.log('🔍 After filtering:', filteredHabits.length, 'habits remaining');
+			setHabits(filteredHabits);
 			
 			// Check if habits have been logged today
 			const today = format(new Date(), 'yyyy-MM-dd');
 			const loggedToday: { [key: number]: boolean } = {};
 			
-			response.data?.forEach(habit => {
+			filteredHabits.forEach(habit => {
 				loggedToday[habit.id] = false; // Default to false
 				
 				if (habit.check_ins && habit.check_ins.length > 0) {
@@ -465,10 +501,11 @@ export default function HomeScreen() {
 										contentContainerStyle={styles.habitsScrollContainer}
 										style={styles.habitsScrollView}
 									>
-										{habits.map((habit) => {
-                      console.log('habits', habits)
+																				{habits.map((habit) => {
+                       console.log('habits', habits)
 										const isInactive = habit.status === 'inactive';
 										const isLoggedToday = habit.current_streak?.last_check_in_date && isLoggedInToday(habit.current_streak?.last_check_in_date);
+										const { daysUntilRemoval } = getDaysUntilRemoval(habit.updated_at);
 											return (
 												<View key={habit.id} style={[
 													styles.habitScrollCard,
@@ -485,17 +522,28 @@ export default function HomeScreen() {
 														]} numberOfLines={2}>
 															{habit.description}
 														</Text>
-														<View style={[
-															styles.streakBadgeScroll,
-															isInactive && styles.streakBadgeScrollInactive
-														]}>
-															<Text style={[
-																styles.streakBadgeScrollText,
-																isInactive && styles.streakBadgeScrollTextInactive
+														{isInactive ? (
+															<View style={styles.removalWarningBadge}>
+																<Text style={styles.removalWarningText}>
+																	{daysUntilRemoval > 0 
+																		? `Removes in ${daysUntilRemoval} day${daysUntilRemoval > 1 ? 's' : ''}`
+																		: 'Removing soon...'
+																	}
+																</Text>
+															</View>
+														) : (
+															<View style={[
+																styles.streakBadgeScroll,
+																isInactive && styles.streakBadgeScrollInactive
 															]}>
-																{habit.current_streak?.current_streak || 0} days
-															</Text>
-														</View>
+																<Text style={[
+																	styles.streakBadgeScrollText,
+																	isInactive && styles.streakBadgeScrollTextInactive
+																]}>
+																	{habit.current_streak?.current_streak || 0} days
+																</Text>
+															</View>
+														)}
 													</View>
 													<TouchableOpacity
 														style={[
@@ -597,6 +645,19 @@ export default function HomeScreen() {
 				{/* Habits Section */}
 				<View style={styles.section}>
 					<Text style={styles.sectionTitle}>Your Habits</Text>
+					
+					{/* Info about auto-removal */}
+					{habits?.some(habit => habit.status === 'inactive') && (
+						<View style={styles.infoCard}>
+							<View style={styles.infoHeader}>
+								<Ionicons name="information-circle-outline" size={16} color="#6366F1" />
+								<Text style={styles.infoText}>
+									Disabled habits are automatically removed after 3 days
+								</Text>
+							</View>
+						</View>
+					)}
+					
 					{loadingHabits ? (
 						<View style={styles.card}>
 							<ActivityIndicator color="#6366F1" size="small" />
@@ -1464,5 +1525,41 @@ const styles = StyleSheet.create({
 	},
 	logButtonScrollTextInactive: {
 		color: '#9CA3AF',
+	},
+	// Removal warning styles
+	removalWarningBadge: {
+		backgroundColor: '#FEF3C7',
+		paddingHorizontal: 10,
+		paddingVertical: 4,
+		borderRadius: 12,
+		alignSelf: 'flex-start',
+		marginBottom: 12,
+		borderWidth: 1,
+		borderColor: '#F59E0B',
+	},
+	removalWarningText: {
+		fontSize: 11,
+		fontWeight: '600',
+		color: '#D97706',
+	},
+	// Info card styles
+	infoCard: {
+		backgroundColor: '#EFF6FF',
+		borderRadius: 8,
+		padding: 12,
+		marginBottom: 16,
+		borderLeftWidth: 3,
+		borderLeftColor: '#6366F1',
+	},
+	infoHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	infoText: {
+		fontSize: 13,
+		color: '#374151',
+		marginLeft: 8,
+		flex: 1,
+		lineHeight: 18,
 	},
 });
