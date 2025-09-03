@@ -65,10 +65,23 @@ export default function RegisterScreen() {
 
 		try {
 			setLoading(true);
+			console.log('🔐 Starting registration...');
 			const response = await authAPI.register(formData);
+			console.log('📦 Registration API response:', response);
 
-			// Sign in with the response data
-			await signIn(response.user, response.token);
+			if (response.token && response.user) {
+				console.log('✅ Registration successful for:', response.user.name);
+				// Sign in with the response data
+				await signIn(response.user, response.token);
+				console.log('🎯 Auth context sign-in completed');
+			} else {
+				console.error('🚫 Missing token or user in registration response:', {
+					hasToken: !!response.token,
+					hasUser: !!response.user,
+					responseKeys: Object.keys(response)
+				});
+				throw new Error('Invalid response from registration API - missing token or user data');
+			}
 
 			// Router will automatically navigate to the main app based on AuthContext
 		} catch (error: any) {

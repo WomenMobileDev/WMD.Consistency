@@ -1,8 +1,9 @@
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 import { format } from 'date-fns';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
 	Alert,
@@ -80,6 +81,14 @@ export default function HomeScreen() {
 		fetchRandomQuote();
 		fetchHabits();
 	}, []);
+
+	// Refresh data when screen comes into focus
+	useFocusEffect(
+		useCallback(() => {
+			console.log('🔄 Home screen focused, refreshing data...');
+			fetchHabits();
+		}, [])
+	);
 
 
 // 2025-09-01T00:00:00Z
@@ -222,26 +231,85 @@ export default function HomeScreen() {
 			goal_duration: Number(goalDuration),
 			goal_unit: goalUnit,
 		};
-		setIsGoalCreating(true)
+
+		// Close modal immediately for smooth UX
+		setGoalModalVisible(false);
+		
+		// Reset form immediately
+		const formData = {
+			name: goalName.trim(),
+			description: goalDescription.trim(),
+		};
+		setGoalName('');
+		setGoalDescription('');
+		setGoalDuration('');
+		setGoalUnit('days');
+
+		// Show creating message
+		Toast.show({
+			type: 'info',
+			text1: 'Creating goal...',
+			text2: `Setting up "${formData.name}"`,
+			visibilityTime: 1500,
+		});
+
+		// Optimistic update - add temporary habit to list immediately
+		const tempHabit: Habit = {
+			id: Date.now(), // Temporary ID
+			user_id: user?.id || 0,
+			name: goalData.name,
+			description: goalData.description,
+			color: goalData.color,
+			icon: goalData.icon,
+			is_active: true,
+			status: 'active',
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
+			current_streak: { current_streak: 0 },
+			check_ins: []
+		};
+		
+		setHabits(prev => [...prev, tempHabit]);
+		setIsGoalCreating(true);
+		
+		// Handle API call and refresh in background
 		try {
 			await authAPI.createGoal(goalData);
-
-			// Reset form
-			setGoalModalVisible(false);
-			setGoalName('');
-			setGoalDescription('');
-			setGoalDuration('');
-			setGoalUnit('days');
 
 			// Show success message
 			Toast.show({
 				type: 'success',
 				text1: 'Success',
 				text2: 'Goal successfully created',
+				visibilityTime: 1500,
 			});
+
+			// Refresh habits list to get real data from server
+			console.log('🔄 Refreshing habits after goal creation...');
+			await fetchHabits();
 		} catch (error) {
 			console.error('Error creating goal:', error);
-			Alert.alert('Error', 'Failed to create goal. Please try again.');
+			
+			// Remove the optimistic update on error
+			setHabits(prev => prev.filter(habit => habit.id !== tempHabit.id));
+			
+			// Show error and optionally reopen modal with previous data
+			Alert.alert(
+				'Error', 
+				'Failed to create goal. Please try again.',
+				[
+					{ text: 'Cancel', style: 'cancel' },
+					{ 
+						text: 'Retry', 
+						onPress: () => {
+							// Restore form data and reopen modal
+							setGoalName(formData.name);
+							setGoalDescription(formData.description);
+							setGoalModalVisible(true);
+						}
+					}
+				]
+			);
 		} finally {
 			setIsGoalCreating(false);
 		}

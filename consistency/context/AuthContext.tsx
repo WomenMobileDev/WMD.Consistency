@@ -73,6 +73,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		const inLogin = segments[0] === 'login';
 		const inRegister = segments[0] === 'register';
 
+		console.log('🧭 Navigation check:', {
+			hasUser: !!user,
+			currentSegment: segments[0],
+			inRegister,
+			inLogin,
+			inSignIn,
+			inOnboarding
+		});
+
 		if (
 			!user &&
 			!inAuthGroup &&
@@ -82,12 +91,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			!inRegister
 		) {
 			// If the user is not signed in and not on an auth screen, redirect to onboarding
+			console.log('🧭 Redirecting to onboarding (no user)');
 			router.replace('/onboarding');
 		} else if (
 			user &&
 			(inAuthGroup || inOnboarding || inSignIn || inLogin || inRegister)
 		) {
 			// If the user is signed in and on an auth screen, redirect to the app
+			console.log('🧭 Redirecting to main app (user authenticated)');
 			router.replace('/(tabs)');
 		}
 	}, [user, segments, isLoading]);
@@ -95,12 +106,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	// Sign in function
 	const signIn = async (userData: User, authToken: string) => {
 		try {
+			console.log('🔐 AuthContext signIn called with:', userData.name, userData.email);
 			if (userData && authToken) {
 				await AsyncStorage.setItem('@user_info', JSON.stringify(userData));
 				await AsyncStorage.setItem('@auth_token', authToken);
 				setUser(userData);
 				setToken(authToken);
 				setAuthToken(authToken);
+				console.log('✅ AuthContext: User authenticated, should navigate to main app');
 			}
 		} catch (error) {
 			console.error('Error saving user data:', error);

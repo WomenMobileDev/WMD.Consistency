@@ -192,6 +192,14 @@ export interface UserProfileResponse {
 export const authAPI = {
 	register: async (data: RegisterRequest): Promise<AuthResponse> => {
 		const response = await api.post('/auth/register', data);
+		console.log('🔧 Register API raw response:', response.data);
+		
+		// Handle nested response structure from API
+		if (response.data.success && response.data.data) {
+			return response.data.data; // Return the nested data object
+		}
+		
+		// Fallback to direct response if structure is different
 		return response.data;
 	},
 

@@ -30,26 +30,17 @@ export default function SignInScreen() {
 				password: 'password@123'
 			};
 
-			console.log('🔐 Making API login request...');
 			const response = await authAPI.login(loginData);
-			console.log('📦 Demo login API response:', response);
 
 			if (response.token && response.user) {
-				console.log('✅ Demo login successful:', response.user.name);
 				// Use our auth context to sign in with the real response
 				await authSignIn(response.user, response.token);
 			} else {
-				console.error('🚫 Missing token or user in response:', { 
-					hasToken: !!response.token, 
-					hasUser: !!response.user,
-					responseKeys: Object.keys(response)
-				});
 				throw new Error('Invalid response from login API - missing token or user data');
 			}
 
 			// Router will automatically navigate to the main app based on our AuthContext
 		} catch (error: any) {
-			console.error('❌ Demo Sign-In Error:', error);
 			Alert.alert(
 				'Demo Sign-In Failed',
 				error.message || 'An error occurred during demo sign in. Please try again.',
@@ -60,14 +51,6 @@ export default function SignInScreen() {
 		}
 	};
 
-	// This function is a placeholder to show the error message about Google Sign-In configuration
-	const showGoogleSignInInfo = () => {
-		Alert.alert(
-			'Google Sign-In Unavailable',
-			'Google Sign-In is currently unavailable due to authentication configuration issues. Please use the Email/Password option for now.',
-			[{ text: 'OK', style: 'default' }]
-		);
-	};
 
 	const navigateToLogin = () => {
 		router.push('/login');
