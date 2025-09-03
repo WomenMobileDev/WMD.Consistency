@@ -168,25 +168,56 @@ export default function HomeScreen() {
 
 	const handleLogFormSave = async (data: LogData) => {
 		console.log('🚀 ~ handleLogFormSave ~ data:', data);
+		
+		if (!selectedHabitId) return;
+
+		// Close modal immediately for smooth UX
+		setLogFormVisible(false);
+		
+		// Update UI optimistically - mark habit as logged immediately
+		setLoggedHabits((prev) => ({
+			...prev,
+			[selectedHabitId]: true,
+		}));
+
+		// Show immediate success feedback for button change
+		Toast.show({
+			type: 'success',
+			text1: 'Logged! ✓',
+			text2: 'Syncing with server...',
+			visibilityTime: 1200,
+		});
+
+		// Store habit ID for error recovery
+		const habitId = selectedHabitId;
+		setSelectedHabitId(null);
+
+		// Handle API call in background
 		try {
-			if (selectedHabitId) {
-				await authAPI.createCheckIn(selectedHabitId, data.description);
-				setLoggedHabits((prev) => ({
-					...prev,
-					[selectedHabitId]: true,
-				}));
+			await authAPI.createCheckIn(habitId, data.description);
+			
+			// Show sync completion (more subtle since user already saw success)
+			setTimeout(() => {
 				Toast.show({
-					type: 'success',
-					text1: 'Success',
-					text2: 'Habit logged successfully!',
+					type: 'info',
+					text1: 'Synced',
+					text2: 'Streak updated!',
+					visibilityTime: 1000,
 				});
-				// Refresh habits to update the streak
-				fetchHabits();
-			}
-			setLogFormVisible(false);
-			setSelectedHabitId(null);
+			}, 200);
+
+			// Refresh habits to update the streak and get real data
+			console.log('🔄 Refreshing habits after logging...');
+			await fetchHabits();
 		} catch (error) {
 			console.error('Error logging habit:', error);
+			
+			// Revert optimistic update on error
+			setLoggedHabits((prev) => ({
+				...prev,
+				[habitId]: false,
+			}));
+			
 			Toast.show({
 				type: 'error',
 				text1: 'Error',
@@ -481,8 +512,8 @@ export default function HomeScreen() {
 										style={styles.habitsScrollView}
 									>
 										{habits.map((habit) => {
-											const isInactive = habit.status === 'inactive';
-                      const isLoggedToday = habit.current_streak?.last_check_in_date && isLoggedInToday(habit.current_streak?.last_check_in_date);
+										const isInactive = !habit.is_active && habit.status === 'inactive';
+										const isLoggedToday = habit.current_streak?.last_check_in_date && isLoggedInToday(habit.current_streak?.last_check_in_date);
 											return (
 												<View key={habit.id} style={[
 													styles.habitScrollCard,
