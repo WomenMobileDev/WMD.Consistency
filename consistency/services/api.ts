@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Base API configuration
-const API_BASE_URL = 'https://11b204d31f58.ngrok-free.app/api/v1'; // Update to use localhost
+// const API_BASE_URL = 'https://11b204d31f58.ngrok-free.app/api/v1'; // Update to use localhost
+const API_BASE_URL = 'https://wmdconsistencyservice.onrender.com/api/v1'; // Update to use localhost
 
 const api = axios.create({
 	baseURL: API_BASE_URL,

@@ -296,7 +296,20 @@ export default function HomeScreen() {
 			status: 'active',
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
-			current_streak: { current_streak: 0 },
+			current_streak: {
+				id: Date.now(),
+				habit_id: Date.now(),
+				target_days: goalData.goal_duration,
+				current_streak: 0,
+				max_streak_achieved: 0,
+				start_date: new Date().toISOString(),
+				last_check_in_date: '',
+				completed_at: null,
+				failed_at: null,
+				status: 'active',
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			},
 			check_ins: []
 		};
 		
@@ -444,67 +457,8 @@ export default function HomeScreen() {
             {isFetchingHabits && <ActivityIndicator color="#6366F1" size="small" />}
 						{habits?.length > 0 && (
 							<>
-								{habits.length <= 3 ? (
-									// Regular vertical layout for 3 or fewer habits
-									habits.map((habit) => {
-										const isInactive = !habit.is_active && habit.status === 'inactive';
-										return (
-											<View key={habit.id} style={[
-												styles.habitPreviewContainer,
-												isInactive && styles.habitPreviewContainerInactive
-											]}>
-												<View style={styles.habitPreviewContent}>
-													<Text style={[
-														styles.habitPreviewName,
-														isInactive && styles.habitPreviewNameInactive
-													]}>{habit.name}</Text>
-													<View style={[
-														styles.streakBadge,
-														isInactive && styles.streakBadgeInactive
-													]}>
-														<Text style={[
-															styles.streakBadgeText,
-															isInactive && styles.streakBadgeTextInactive
-														]}>
-															{habit.check_ins?.length || 0} days streak
-														</Text>
-													</View>
-												</View>
-												<View style={styles.logStatusRow}>
-													<Text
-														style={[
-															styles.notLoggedText,
-															loggedHabits[habit.id] && styles.loggedText,
-															isInactive && styles.notLoggedTextInactive
-														]}
-													>
-														{isInactive ? 'Inactive' : (loggedHabits[habit.id] ? 'Logged' : 'Not Logged')}
-													</Text>
-													<TouchableOpacity
-														style={[
-															styles.logButton,
-															loggedHabits[habit.id] && styles.loggedButton,
-															isInactive && styles.logButtonInactive
-														]}
-														onPress={() => !isInactive && !loggedHabits[habit.id] && handleLogPress(habit.id)}
-														disabled={isInactive || loggedHabits[habit.id]}
-													>
-														<Text
-															style={[
-																styles.logButtonText,
-																loggedHabits[habit.id] && styles.loggedButtonText,
-																isInactive && styles.logButtonTextInactive
-															]}
-														>
-															{isInactive ? 'Disabled' : (loggedHabits[habit.id] ? 'Logged ✓' : 'Log it')}
-														</Text>
-													</TouchableOpacity>
-												</View>
-											</View>
-										);
-									})
-								) : (
-									// Horizontal scroll for more than 3 habits
+								
+									{/* // Horizontal scroll for more than 3 habits */}
 									<ScrollView
 										horizontal
 										showsHorizontalScrollIndicator={false}
@@ -555,25 +509,16 @@ export default function HomeScreen() {
 														{isLoggedToday ? (
 															<Text style={styles.alreadyLoggedToday}>Logged</Text>
 														) : (
-															<Text>
+															<Text style={{color:'white'}}>
 																Log
 															</Text>
 														)}
-														{/* <Text
-															style={[
-																styles.logButtonScrollText,
-																loggedHabits[habit.id] && styles.loggedButtonScrollText,
-																isInactive && styles.logButtonScrollTextInactive
-															]}
-														>
-															{isInactive ? 'Disabled' : (loggedHabits[habit.id] ? '✓ Logged' : 'Log')}
-														</Text> */}
 													</TouchableOpacity>
 												</View>
 											);
 										})}
 									</ScrollView>
-								)}
+								
 							</>
 						)}
 
