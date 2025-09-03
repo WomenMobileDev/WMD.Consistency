@@ -1,5 +1,5 @@
-import { GoogleIcon } from '@/components/GoogleIcon';
 import { useAuth } from '@/context/AuthContext';
+import { authAPI } from '@/services/api';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -22,25 +22,38 @@ export default function SignInScreen() {
 	const handleDemoSignIn = async () => {
 		try {
 			setLoading(true);
+			console.log('🎭 Starting demo sign-in...');
 
-			// Create a demo user with updated structure
-			const demoUser = {
-				id: 123,
-				name: 'Demo User',
-				email: 'demo@example.com',
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString(),
+			// Use the working demo credentials to make a real API call
+			const loginData = {
+				email: 'john1@example.com',
+				password: 'password@123'
 			};
 
-			// Use our auth context to sign in with a demo token
-			authSignIn(demoUser, 'demo-token-123');
+			console.log('🔐 Making API login request...');
+			const response = await authAPI.login(loginData);
+			console.log('📦 Demo login API response:', response);
+
+			if (response.token && response.user) {
+				console.log('✅ Demo login successful:', response.user.name);
+				// Use our auth context to sign in with the real response
+				await authSignIn(response.user, response.token);
+			} else {
+				console.error('🚫 Missing token or user in response:', { 
+					hasToken: !!response.token, 
+					hasUser: !!response.user,
+					responseKeys: Object.keys(response)
+				});
+				throw new Error('Invalid response from login API - missing token or user data');
+			}
 
 			// Router will automatically navigate to the main app based on our AuthContext
-		} catch (error) {
-			console.error('Demo Sign-In Error:', error);
+		} catch (error: any) {
+			console.error('❌ Demo Sign-In Error:', error);
 			Alert.alert(
-				'Error',
-				'An error occurred during sign in. Please try again.'
+				'Demo Sign-In Failed',
+				error.message || 'An error occurred during demo sign in. Please try again.',
+				[{ text: 'OK' }]
 			);
 		} finally {
 			setLoading(false);
@@ -109,14 +122,17 @@ export default function SignInScreen() {
 						disabled={loading}
 					>
 						{loading ? (
-							<ActivityIndicator color="#fff" />
+							<>
+								<ActivityIndicator color="#fff" size="small" />
+								<Text style={[styles.buttonText, { marginLeft: 8 }]}>Signing in...</Text>
+							</>
 						) : (
-							<Text style={styles.buttonText}>Demo Sign In</Text>
+							<Text style={styles.buttonText}>🎭 Demo Sign In</Text>
 						)}
 					</TouchableOpacity>
 
 					{/* Google sign-in button (temporarily disabled) */}
-					<TouchableOpacity
+					{/* <TouchableOpacity
 						style={[styles.signInButton, styles.googleButton]}
 						onPress={showGoogleSignInInfo}
 					>
@@ -129,7 +145,7 @@ export default function SignInScreen() {
 					<Text style={styles.noteText}>
 						Note: Google Sign-In is temporarily unavailable due to
 						authentication configuration issues.
-					</Text>
+					</Text> */}
 				</View>
 			</View>
 		</SafeAreaView>

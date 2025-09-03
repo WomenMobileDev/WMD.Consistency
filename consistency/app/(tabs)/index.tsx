@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -47,6 +48,7 @@ const FALLBACK_QUOTES = [
 ];
 
 export default function HomeScreen() {
+	const { user, signOut } = useAuth();
 	const today = new Date();
 	const [quote, setQuote] = useState<Quote | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -274,7 +276,45 @@ export default function HomeScreen() {
 		<View style={styles.container}>
 			<SafeAreaView edges={['top']} style={{ backgroundColor: 'white' }}>
 				<View style={styles.header}>
-					<Text style={styles.headerTitle}>Today</Text>
+					<TouchableOpacity
+						onLongPress={() => {
+							Alert.alert(
+								'Quick Logout',
+								'Long press detected. Logout?',
+								[
+									{ text: 'Cancel', style: 'cancel' },
+									{ 
+										text: 'Logout', 
+										style: 'destructive',
+										onPress: () => signOut()
+									}
+								]
+							);
+						}}
+						delayLongPress={2000}
+					>
+						<Text style={styles.headerTitle}>Today</Text>
+					</TouchableOpacity>
+					{/* Temporary logout button for debugging */}
+					<TouchableOpacity 
+						style={styles.tempLogoutButton}
+						onPress={() => {
+							Alert.alert(
+								'Logout',
+								'Are you sure you want to logout?',
+								[
+									{ text: 'Cancel', style: 'cancel' },
+									{ 
+										text: 'Logout', 
+										style: 'destructive',
+										onPress: () => signOut()
+									}
+								]
+							);
+						}}
+					>
+						<Ionicons name="log-out-outline" size={24} color="#666" />
+					</TouchableOpacity>
 				</View>
 			</SafeAreaView>
 
@@ -772,6 +812,10 @@ const styles = StyleSheet.create({
 		paddingBottom: 100, // Extra padding for FAB
 	},
 	header: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingHorizontal: 16,
 		paddingVertical: 12,
 		borderBottomWidth: 1,
 		borderBottomColor: '#E5E5E5',
@@ -781,6 +825,12 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontWeight: '600',
 		textAlign: 'center',
+		flex: 1,
+	},
+	tempLogoutButton: {
+		padding: 8,
+		borderRadius: 8,
+		backgroundColor: '#f5f5f5',
 	},
 	section: {
 		marginTop: 16,

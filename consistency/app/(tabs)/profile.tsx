@@ -275,6 +275,15 @@ export default function ProfileScreen() {
 						}}
 					>
 						<Text style={styles.retryButtonText}>Retry</Text>
+						
+					</TouchableOpacity>
+					<TouchableOpacity 
+						style={styles.retryButton}
+						onPress={() => {
+							signOut();
+						}}
+					>
+						<Text style={styles.retryButtonText}>Logout</Text>
 					</TouchableOpacity>
 				</View>
 			</SafeAreaView>
@@ -422,7 +431,6 @@ export default function ProfileScreen() {
 
 				<View style={{ height: 80 }} />
 			</ScrollView>
-
 		</SafeAreaView>
 	);
 }

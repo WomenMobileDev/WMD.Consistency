@@ -197,6 +197,14 @@ export const authAPI = {
 
 	login: async (data: LoginRequest): Promise<AuthResponse> => {
 		const response = await api.post('/auth/login', data);
+		console.log('🔧 Login API raw response:', response.data);
+		
+		// Handle nested response structure from API
+		if (response.data.success && response.data.data) {
+			return response.data.data; // Return the nested data object
+		}
+		
+		// Fallback to direct response if structure is different
 		return response.data;
 	},
 

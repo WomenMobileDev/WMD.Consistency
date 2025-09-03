@@ -4,16 +4,16 @@ import { authAPI, LoginRequest } from '@/services/api';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-	ActivityIndicator,
-	Alert,
-	Image,
-	KeyboardAvoidingView,
-	Platform,
-	ScrollView,
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -52,8 +52,9 @@ export default function LoginScreen() {
 		try {
 			setLoading(true);
 			const response = await authAPI.login(formData);
-			// Sign in with the response data
-			await signIn(response?.data?.user, response?.data?.token);
+			console.log('🔧 Manual login API response:', response);
+			// Sign in with the response data (API service now handles nested structure)
+			await signIn(response.user, response.token);
 
 			// Router will automatically navigate to the main app based on AuthContext
 		} catch (error: any) {
