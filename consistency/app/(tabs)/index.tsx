@@ -466,7 +466,8 @@ export default function HomeScreen() {
 										style={styles.habitsScrollView}
 									>
 										{habits.map((habit) => {
-										const isInactive = !habit.is_active && habit.status === 'inactive';
+                      console.log('habits', habits)
+										const isInactive = habit.status === 'inactive';
 										const isLoggedToday = habit.current_streak?.last_check_in_date && isLoggedInToday(habit.current_streak?.last_check_in_date);
 											return (
 												<View key={habit.id} style={[
