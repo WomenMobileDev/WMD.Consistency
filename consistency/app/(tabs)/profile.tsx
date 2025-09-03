@@ -1,6 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
-import { dummyProfileData } from '@/dummy-profile-data';
-import { UserProfileData } from '@/services/api';
+import { authAPI, UserProfileData } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -18,10 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
-// Fallback data for when profile data is not available
-const fallbackUserData = {
-	name: 'User',
-};
+
 
 export default function ProfileScreen() {
 	const { user, signOut } = useAuth();
@@ -30,40 +26,77 @@ export default function ProfileScreen() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	// Fetch user profile data
+	// Fetch user profile data from real API
 	useEffect(() => {
 		const fetchProfileData = async () => {
 			try {
 				setLoading(true);
 				setError(null);
-				console.log('📊 Loading profile data...');
+				console.log('📊 Fetching user profile data from API...');
 				
-				// Simulate loading delay for better UX
-				await new Promise(resolve => setTimeout(resolve, 1000));
+				const response = await authAPI.getUserProfile();
+				console.log('📊 Profile API response:', response);
 				
-				// Use dummy data with user's actual name if available
-				const profileData = {
-					...dummyProfileData,
-					name: user?.name || dummyProfileData.name,
-					email: user?.email || dummyProfileData.email,
-					id: user?.id || dummyProfileData.id,
-					created_at: user?.created_at || dummyProfileData.created_at,
-				};
-				
-				setProfileData(profileData);
-				console.log('✅ Profile data loaded with dummy data:', profileData.name);
-				
+				if (response.success && response.data) {
+					setProfileData(response.data);
+					console.log('✅ Profile data loaded from API:', response.data.name);
+				} else {
+					throw new Error('Invalid response format from API');
+				}
 			} catch (err: any) {
-				console.error('❌ Error loading profile data:', err);
-				setError(`Failed to load profile data: ${err.message}`);
-				setProfileData(null);
+				console.error('❌ Error fetching profile data:', err);
+				
+				// Check if it's a 404 error (endpoint doesn't exist)
+				if (err.message && err.message.includes('Profile endpoint not available')) {
+					console.log('📝 Profile endpoint not implemented yet, using basic user data');
+					// Create basic profile data from auth context
+					const basicProfile: UserProfileData = {
+						id: user?.id || 1,
+						email: user?.email || 'user@example.com',
+						name: user?.name || 'User',
+						created_at: user?.created_at || new Date().toISOString(),
+						overview: {
+							total_habits: 0,
+							active_habits: 0,
+							total_check_ins: 0,
+							total_achievements: 0,
+							days_since_joined: Math.floor((Date.now() - new Date(user?.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24)),
+							overall_consistency: 0,
+							weekly_consistency: 0,
+							monthly_consistency: 0,
+						},
+						streak_insights: {
+							current_longest_streak: 0,
+							best_streak_ever: 0,
+							average_streak_length: 0,
+							active_streaks_count: 0,
+						},
+						consistency_chart: [],
+						top_habits: [],
+						recent_achievements: [],
+						most_consistent_habit: {
+							habit_id: 0,
+							habit_name: 'Start building your first habit!',
+							consistency_rate: 0,
+							current_streak: 0,
+							total_check_ins: 0,
+							last_check_in: new Date().toISOString(),
+						},
+						improvement_trend: 'starting',
+					};
+					setProfileData(basicProfile);
+					setError(null); // Clear error since we have fallback data
+				} else {
+					setError(`Failed to load profile data: ${err.message || 'Unknown error'}`);
+					setProfileData(null);
+				}
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		fetchProfileData();
-	}, [user]);
+	}, []);
 
 	// Function to handle logout
 	const handleLogout = async () => {
@@ -180,8 +213,8 @@ export default function ProfileScreen() {
 		);
 	};
 
-	// Use real profile data or fallback to auth context or fallback data
-	const displayName = profileData?.name || user?.name || fallbackUserData.name;
+	// Use real profile data or fallback to auth context
+	const displayName = profileData?.name || user?.name || 'User';
 	const displayInitial = displayName.charAt(0);
 
 	// Custom Avatar component with user data
@@ -222,25 +255,20 @@ export default function ProfileScreen() {
 							try {
 								setError(null);
 								setLoading(true);
-								console.log('🔄 Retrying profile data load...');
+								console.log('🔄 Retrying profile data fetch from API...');
 								
-								// Simulate loading delay
-								await new Promise(resolve => setTimeout(resolve, 1000));
+								const response = await authAPI.getUserProfile();
+								console.log('📊 Retry API response:', response);
 								
-								// Use dummy data with user's actual info
-								const profileData = {
-									...dummyProfileData,
-									name: user?.name || dummyProfileData.name,
-									email: user?.email || dummyProfileData.email,
-									id: user?.id || dummyProfileData.id,
-									created_at: user?.created_at || dummyProfileData.created_at,
-								};
-								
-								setProfileData(profileData);
-								console.log('✅ Profile data loaded on retry:', profileData.name);
+								if (response.success && response.data) {
+									setProfileData(response.data);
+									console.log('✅ Profile data loaded on retry:', response.data.name);
+								} else {
+									throw new Error('Invalid response format from API');
+								}
 							} catch (err: any) {
 								console.error('❌ Retry failed:', err);
-								setError(`Failed to load profile data: ${err.message}`);
+								setError(`Failed to load profile data: ${err.message || 'Unknown error'}`);
 							} finally {
 								setLoading(false);
 							}
@@ -301,7 +329,15 @@ export default function ProfileScreen() {
 
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>7-Day Consistency</Text>
-					{renderConsistencyChart()}
+					{profileData?.consistency_chart && profileData.consistency_chart.length > 0 ? (
+						renderConsistencyChart()
+					) : (
+						<View style={styles.comingSoonContainer}>
+							<Ionicons name="analytics-outline" size={48} color="#CCC" />
+							<Text style={styles.comingSoonText}>Detailed Analytics Coming Soon!</Text>
+							<Text style={styles.comingSoonSubtext}>Start logging your habits to see your progress</Text>
+						</View>
+					)}
 				</View>
 
 				{/* Streak Insights */}

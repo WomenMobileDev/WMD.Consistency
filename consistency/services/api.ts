@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base API configuration
-const API_BASE_URL = 'https://11b204d31f58.ngrok-free.app/api/v1'; // Replace with your actual API URL
+const API_BASE_URL = 'https://11b204d31f58.ngrok-free.app/api/v1'; // Update to use localhost
 
 const api = axios.create({
 	baseURL: API_BASE_URL,
@@ -191,17 +191,17 @@ export interface UserProfileResponse {
 // Authentication API functions
 export const authAPI = {
 	register: async (data: RegisterRequest): Promise<AuthResponse> => {
-		const response = await api.post(`${API_BASE_URL}/auth/register`, data);
+		const response = await api.post('/auth/register', data);
 		return response.data;
 	},
 
 	login: async (data: LoginRequest): Promise<AuthResponse> => {
-		const response = await api.post(`${API_BASE_URL}/auth/login`, data);
+		const response = await api.post('/auth/login', data);
 		return response.data;
 	},
 
 	createGoal: async (data: GoalRequest): Promise<GoalResponse> => {
-		const response = await api.post(`${API_BASE_URL}/habits`, {...data,target_days:data.goal_duration});
+		const response = await api.post('/habits', {...data,target_days:data.goal_duration});
 		return response.data;
 	},
 
@@ -242,9 +242,9 @@ export const authAPI = {
 	},
 
 	getUserProfile: async (): Promise<UserProfileResponse> => {
-		console.log('🌐 API Request: GET /user/profile');
+		console.log('🌐 API Request: GET /profile');
 		try {
-			const response = await api.get('/user/profile');
+			const response = await api.get('/profile');
 			console.log('🌐 API Response: User profile data received', response.data);
 			return response.data;
 		} catch (error: any) {
