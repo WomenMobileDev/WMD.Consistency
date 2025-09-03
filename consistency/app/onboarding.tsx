@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
+import LottieView from 'lottie-react-native';
 import React from 'react';
 import {
+	Dimensions,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
-	Image,
-	Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,14 +21,19 @@ export default function OnboardingScreen() {
 
 	return (
 		<View style={styles.container}>
-			<Image
-				source={require('../assets/images/SplashOptimized.png')}
+			<LottieView
+				source={require('../assets/images/Done.json')}
+			autoPlay
+			 loop={false}
 				style={styles.backgroundImage}
-				resizeMode="contain"
 			/>
 
 			<SafeAreaView style={styles.safeArea}>
+			<Text style={styles.welcomeText}>
+						Welcome to Consistency
+					</Text>
 				<View style={styles.buttonContainer}>
+			
 					<TouchableOpacity style={styles.button} onPress={handleGetStarted}>
 						<Text style={styles.buttonText}>
 							Get Started <Text style={styles.arrow}>→</Text>
@@ -54,6 +59,7 @@ const styles = StyleSheet.create({
 		height: height * 1,
 		alignSelf: 'center',
 		justifyContent: 'center',
+		backgroundColor: 'white',
 	},
 	safeArea: {
 		flex: 1,
@@ -81,4 +87,10 @@ const styles = StyleSheet.create({
 	arrow: {
 		fontWeight: 'normal',
 	},
-});
+	welcomeText: {
+		fontSize: 24,
+		fontWeight: 'bold',
+		marginBottom: 20,
+		color: 'black',
+	},
+	});
