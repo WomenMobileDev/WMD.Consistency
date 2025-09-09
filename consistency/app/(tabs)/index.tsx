@@ -443,26 +443,6 @@ export default function HomeScreen() {
 					>
 						<Text style={styles.headerTitle}>Today</Text>
 					</TouchableOpacity>
-					{/* Temporary logout button for debugging */}
-					<TouchableOpacity 
-						style={styles.tempLogoutButton}
-						onPress={() => {
-							Alert.alert(
-								'Logout',
-								'Are you sure you want to logout?',
-								[
-									{ text: 'Cancel', style: 'cancel' },
-									{ 
-										text: 'Logout', 
-										style: 'destructive',
-										onPress: () => signOut()
-									}
-								]
-							);
-						}}
-					>
-						<Ionicons name="log-out-outline" size={24} color="#666" />
-					</TouchableOpacity>
 				</View>
 			</SafeAreaView>
 
@@ -620,12 +600,15 @@ export default function HomeScreen() {
 
 				{/* Motivational Boost */}
 				<View style={styles.section}>
+				<TouchableOpacity onPress={handleRefreshQuote}>
+
 					<View style={styles.sectionHeader}>
+
 						<Text style={styles.sectionTitle}>Motivational Boost</Text>
-						<TouchableOpacity onPress={handleRefreshQuote}>
-							<Ionicons name="refresh-outline" size={20} color="#666" />
-						</TouchableOpacity>
+							<Ionicons name="refresh-outline" size={16} color="#666" />
 					</View>
+					</TouchableOpacity>
+
 					<View style={styles.motivationCard}>
 						{loading ? (
 							<ActivityIndicator color="#6366F1" size="small" />
@@ -946,6 +929,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		marginBottom: 12,
+		
 	},
 	sectionTitle: {
 		fontSize: 18,

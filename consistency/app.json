@@ -8,12 +8,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.consistency.app"
+      "supportsTablet": true,
+      "bundleIdentifier": "com.consistency.app"
     },
     "android": {
-			"edgeToEdgeEnabled": true,
-			"package": "com.consistency.app"
+      "edgeToEdgeEnabled": true,
+      "package": "com.consistency.app"
     },
     "web": {
       "bundler": "metro",
@@ -25,24 +25,26 @@
       [
         "expo-splash-screen",
         {
-					"image": "./assets/images/SplashOptimized.png",
-					"resizeMode": "cover",
+          "image": "./assets/images/SplashOptimized.png",
+          "resizeMode": "cover",
           "backgroundColor": "#ffffff"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-		},
-		"splash": {
-			"image": "./assets/images/SplashOptimized.png",
-			"resizeMode": "cover",
-			"backgroundColor": "#ffffff"
-		},
-		"extra": {
-			"eas": {
-				"projectId": "your-eas-project-id"
-			}
-    }
+    },
+    "splash": {
+      "image": "./assets/images/SplashOptimized.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1989a8c4-2a78-4230-b2e7-13f6657dc248"
+      }
+    },
+    "owner": "shreyamishra"
   }
 }
